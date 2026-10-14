@@ -50,7 +50,9 @@ function Backdrop(props: { children: JSX.Element; onClose: () => void; top?: boo
     const focusable = box.querySelector<HTMLElement>("[autofocus], input, select, button, textarea");
     focusable?.focus();
   });
-  onCleanup(() => previous?.focus?.());
+  // Restore focus after the current key event, or the Enter that closed the
+  // dialog would also "click" the button that opened it.
+  onCleanup(() => requestAnimationFrame(() => previous?.focus?.()));
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
       e.stopPropagation();
@@ -152,7 +154,10 @@ function PromptDialog(props: { modal: Extract<ReturnType<typeof modal>, { kind: 
           ref={(el) => requestAnimationFrame(() => el.select())}
           onInput={(e) => setValue(e.currentTarget.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && value().trim()) done(value().trim());
+            if (e.key === "Enter" && value().trim()) {
+              e.preventDefault();
+              done(value().trim());
+            }
           }}
         />
       </label>
@@ -190,7 +195,12 @@ function SaveWorkspaceDialog() {
           autofocus
           value={name()}
           onInput={(e) => setName(e.currentTarget.value)}
-          onKeyDown={(e) => e.key === "Enter" && name().trim() && void save()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && name().trim()) {
+              e.preventDefault();
+              void save();
+            }
+          }}
         />
       </label>
     </Dialog>

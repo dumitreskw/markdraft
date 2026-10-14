@@ -20,7 +20,7 @@ export function openContextMenu(items: MenuItem[], x: number, y: number) {
 function close() {
   const m = menu();
   setMenu(null);
-  m?.restoreFocus?.focus?.();
+  requestAnimationFrame(() => m?.restoreFocus?.focus?.());
 }
 
 /** Renders the open context menu, kept inside the window. */

@@ -266,7 +266,7 @@ export type BlockChange = "unchanged" | "added" | "removed" | "modified" | "move
 export type BlockType =
   | { type: "paragraph" }
   | { type: "heading"; level: number }
-  | { type: "listItem"; ordered: boolean; depth: number; checked: boolean | null; number: number | null }
+  | { type: "listItem"; ordered: boolean; depth: number /* 0 = top level */; checked: boolean | null; number: number | null }
   | { type: "code"; lang: string | null }
   | { type: "table" }
   | { type: "quote" }

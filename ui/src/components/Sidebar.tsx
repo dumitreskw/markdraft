@@ -4,7 +4,7 @@ import { extension, relativeTo } from "../paths";
 import { openDoc, reveal } from "../state/docs";
 import { settings, updateSettings } from "../state/settings";
 import { countDocs } from "../state/tree";
-import { prompt, setSidebarTab, sidebarTab, toast, type SidebarTab } from "../state/ui";
+import { setSidebarTab, sidebarTab, type SidebarTab } from "../state/ui";
 import {
   gitState,
   opened,
@@ -20,6 +20,7 @@ import { openDiff, openHistory } from "./DiffView";
 import { FileTree } from "./FileTree";
 import { FileIcon, FolderIcon, GitIcon, ListIcon, PlusIcon, RefreshIcon, SearchIcon } from "./Icons";
 import { openContextMenu } from "./ContextMenu";
+import { commands } from "../commands";
 
 const DOC_EXTENSIONS = new Set(["md", "markdown", "mdx"]);
 
@@ -70,17 +71,8 @@ function FilesPanel() {
   const docCount = createMemo(() => countDocs(rootInputs()));
   const title = () => opened()?.workspace?.name ?? (roots().length === 1 ? roots()[0].name : "Workspace");
 
-  const newDoc = async () => {
-    const folder = roots()[0]?.path;
-    if (!folder) return;
-    const name = await prompt("New document", "Document name", "Untitled");
-    if (!name) return;
-    try {
-      await openDoc(await ipc.createEntry(folder, name, false));
-    } catch (e) {
-      toast(ipc.errorMessage(e), "error");
-    }
-  };
+  // Same as Mod+N: in the active document's folder, then focus the editor.
+  const newDoc = () => void commands.find((c) => c.id === "new-document")?.run();
 
   const viewMenu = (e: MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -207,6 +199,7 @@ function SearchPanel() {
       <div class="search-box">
         <input
           id="search-input"
+          ref={(el) => requestAnimationFrame(() => el.focus())}
           type="search"
           placeholder="Search in documents"
           aria-label="Search in documents"

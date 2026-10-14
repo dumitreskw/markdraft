@@ -713,11 +713,11 @@ svg {
 .git-badge {
   display: inline-grid;
   place-items: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
   border-radius: 4px;
-  font: 700 10px var(--font-mono);
+  font: 700 11px/1 var(--font-ui);
   text-transform: uppercase;
 }
 

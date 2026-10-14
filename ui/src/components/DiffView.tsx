@@ -380,7 +380,8 @@ function ModifiedView(props: { block: DiffBlock; html: string | null }) {
                 <Content />
               </li>
             );
-            const indent = { "margin-left": `${(item().depth - 1) * 1.6}em` };
+            // depth is 0 for a top-level item.
+            const indent = { "margin-left": `${item().depth * 1.6}em` };
             return item().ordered ? (
               <ol class="diff-list" start={item().number ?? 1} style={indent}>
                 {body}

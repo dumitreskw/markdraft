@@ -213,6 +213,8 @@ export function FileTree() {
   };
 
   const commitRename = async (row: Row, name: string) => {
+    // Enter commits, then the input's blur fires: only the first counts.
+    if (renaming() !== row.key) return;
     setRenaming(null);
     const trimmed = name.trim();
     if (!trimmed || trimmed === row.name) return;

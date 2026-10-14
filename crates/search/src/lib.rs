@@ -1,4 +1,8 @@
-//! Fuzzy file finding for quick open; full-text search arrives in v1.1.
+//! Fuzzy file finding for quick open, and full-text search.
+
+mod text;
+
+pub use text::{FileMatches, LineMatch, SearchError, TextQuery, search_files};
 
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher, Utf32Str};

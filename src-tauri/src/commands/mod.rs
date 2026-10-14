@@ -3,5 +3,6 @@
 
 pub mod app;
 pub mod docs;
+pub mod git;
 pub mod roots;
 pub mod search;

@@ -1,4 +1,4 @@
-//! Quick open across all open roots.
+//! Quick open and full-text search across all open roots.
 
 use std::path::PathBuf;
 
@@ -62,6 +62,34 @@ pub async fn quick_open(
             .collect()
     };
     blocking(move || Ok(rank(&query, candidates, limit as usize))).await
+}
+
+/// Searches the text of every document in the open folders.
+#[tauri::command]
+pub async fn search_text(
+    state: State<'_, AppState>,
+    query: search::TextQuery,
+    max_files: u32,
+) -> Result<Vec<search::FileMatches>, CmdError> {
+    let files: Vec<PathBuf> = {
+        let roots = state.roots_read();
+        roots
+            .list
+            .iter()
+            .flat_map(|root| {
+                let index = root.index.read().unwrap_or_else(|p| p.into_inner());
+                index
+                    .keys()
+                    .map(|rel| root.path.join(rel))
+                    .collect::<Vec<_>>()
+            })
+            .collect()
+    };
+    blocking(move || {
+        search::search_files(&files, &query, max_files as usize)
+            .map_err(|e| CmdError::Invalid(e.to_string()))
+    })
+    .await
 }
 
 /// Score, matched display positions, matched title positions.

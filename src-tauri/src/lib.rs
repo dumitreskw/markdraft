@@ -97,6 +97,11 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::docs::trash_entry,
             commands::docs::duplicate_entry,
             commands::search::quick_open,
+            commands::search::search_text,
+            commands::git::git_info,
+            commands::git::git_status,
+            commands::git::git_history,
+            commands::git::diff_document,
         ])
         .build(tauri::generate_context!())?;
 

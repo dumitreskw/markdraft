@@ -29,6 +29,11 @@ const COMMANDS: &[&str] = &[
     "trash_entry",
     "duplicate_entry",
     "quick_open",
+    "search_text",
+    "git_info",
+    "git_status",
+    "git_history",
+    "diff_document",
 ];
 
 fn main() {

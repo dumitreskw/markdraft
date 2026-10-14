@@ -35,6 +35,11 @@
     "allow-rename-entry",
     "allow-trash-entry",
     "allow-duplicate-entry",
-    "allow-quick-open"
+    "allow-quick-open",
+    "allow-git-info",
+    "allow-git-status",
+    "allow-git-history",
+    "allow-diff-document",
+    "allow-search-text"
   ]
 }

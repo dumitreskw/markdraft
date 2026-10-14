@@ -28,6 +28,7 @@ jobs:
       # Signing turns on by itself once the secrets exist (see docs/SIGNING.md).
       HAS_APPLE_SIGNING: ${{ secrets.APPLE_CERTIFICATE != '' }}
       HAS_WINDOWS_SIGNING: ${{ secrets.AZURE_CLIENT_ID != '' }}
+      HAS_WINDOWS_TEST_CERT: ${{ secrets.WINDOWS_TEST_CERTIFICATE != '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -64,6 +65,34 @@ jobs:
             echo "APPLE_PASSWORD=${{ secrets.APPLE_PASSWORD }}"
             echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}"
           } >> "$GITHUB_ENV"
+
+      # Without a Developer ID, sign ad hoc: Apple Silicon then shows the
+      # "unidentified developer" prompt instead of "app is damaged".
+      - name: Configure macOS ad-hoc signing
+        if: runner.os == 'macOS' && env.HAS_APPLE_SIGNING != 'true'
+        shell: bash
+        run: |
+          echo '{"bundle":{"macOS":{"signingIdentity":"-"}}}' > src-tauri/tauri.signing.json
+          echo "EXTRA_TAURI_ARGS=--config src-tauri/tauri.signing.json" >> "$GITHUB_ENV"
+
+      # ---- Windows: self-signed test certificate (not trusted by others) --
+      - name: Configure Windows test signing
+        if: runner.os == 'Windows' && env.HAS_WINDOWS_SIGNING != 'true' && env.HAS_WINDOWS_TEST_CERT == 'true'
+        shell: pwsh
+        env:
+          CERT_B64: ${{ secrets.WINDOWS_TEST_CERTIFICATE }}
+          CERT_PASSWORD: ${{ secrets.WINDOWS_TEST_CERTIFICATE_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "markdraft-test.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CERT_B64))
+          $password = ConvertTo-SecureString $env:CERT_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
+          @{ bundle = @{ windows = @{
+              certificateThumbprint = $cert.Thumbprint
+              digestAlgorithm = "sha256"
+              timestampUrl = "http://timestamp.digicert.com"
+          } } } | ConvertTo-Json -Depth 5 | Set-Content src-tauri/tauri.signing.json
+          "EXTRA_TAURI_ARGS=--config src-tauri/tauri.signing.json" >> $env:GITHUB_ENV
 
       # ---- Windows: Azure Artifact Signing ---------------------------------
       - name: Configure Windows signing

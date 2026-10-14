@@ -15,6 +15,40 @@ soon as the secrets below exist. Until then it keeps producing unsigned builds.
 
 ---
 
+## 0. Free option while MarkDraft is not sold yet
+
+A *TLS/SSL* certificate (for example from Let's Encrypt) cannot sign
+software: code signing needs a certificate issued for code signing. You can,
+however, make your own **self-signed** code-signing certificate for free.
+
+What it does and doesn't do:
+
+| | Self-signed (free) | Trusted (Azure / CA / Apple) |
+|---|---|---|
+| Proves the installer was not modified after you built it | Yes | Yes |
+| Windows shows your name as publisher | Only on machines that trust your certificate | Everywhere |
+| Removes "Windows protected your PC" (SmartScreen) for other people | **No** | Builds up over time |
+| macOS opens without a Gatekeeper warning | **No** (ad-hoc signing only) | Yes, once notarised |
+
+So it is useful for you and your team or testers, not for the public.
+
+**Windows (2 minutes):**
+
+1. Run `pwsh scripts/make-test-certificate.ps1` and choose a password.
+2. Add the two GitHub secrets it prints: `WINDOWS_TEST_CERTIFICATE` and
+   `WINDOWS_TEST_CERTIFICATE_PASSWORD`. Releases are then signed with it
+   automatically (until Azure secrets exist, which take priority).
+3. On each test machine, import `markdraft-test.cer` with the two commands the
+   script prints. Those machines then show "MarkDraft (test signing)" as the
+   publisher instead of "Unknown publisher".
+
+**macOS (nothing to do):** releases without Apple secrets are signed *ad
+hoc*. Apple Silicon Macs then show "unidentified developer" instead of "app is
+damaged". Users open it once with right-click → **Open** (or System Settings →
+Privacy & Security → **Open Anyway**).
+
+---
+
 ## 1. macOS: Developer ID + notarisation
 
 ### 1.1 Join the Apple Developer Program

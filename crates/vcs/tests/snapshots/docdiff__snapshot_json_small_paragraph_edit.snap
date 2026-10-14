@@ -1,0 +1,82 @@
+---
+source: crates/vcs/tests/docdiff.rs
+expression: d
+---
+{
+  "blocks": [
+    {
+      "kind": "unchanged",
+      "blockType": {
+        "type": "heading",
+        "level": 1
+      },
+      "oldBlockType": null,
+      "oldText": "# Notes",
+      "newText": "# Notes",
+      "oldLines": [
+        1,
+        1
+      ],
+      "newLines": [
+        1,
+        1
+      ],
+      "segments": [],
+      "table": null
+    },
+    {
+      "kind": "modified",
+      "blockType": {
+        "type": "paragraph"
+      },
+      "oldBlockType": null,
+      "oldText": "Ship the beta on Friday.",
+      "newText": "Ship the public beta on Monday.",
+      "oldLines": [
+        3,
+        3
+      ],
+      "newLines": [
+        3,
+        3
+      ],
+      "segments": [
+        {
+          "kind": "equal",
+          "text": "Ship the "
+        },
+        {
+          "kind": "insert",
+          "text": "public "
+        },
+        {
+          "kind": "equal",
+          "text": "beta on "
+        },
+        {
+          "kind": "delete",
+          "text": "Friday"
+        },
+        {
+          "kind": "insert",
+          "text": "Monday"
+        },
+        {
+          "kind": "equal",
+          "text": "."
+        }
+      ],
+      "table": null
+    }
+  ],
+  "stats": {
+    "addedBlocks": 0,
+    "removedBlocks": 0,
+    "modifiedBlocks": 1,
+    "movedBlocks": 0,
+    "wordsAdded": 2,
+    "wordsRemoved": 1,
+    "identical": false
+  },
+  "timedOut": false
+}

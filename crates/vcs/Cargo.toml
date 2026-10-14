@@ -1,0 +1,24 @@
+[package]
+name = "vcs"
+description = "Read-only Git access and readable Markdown document diffs for MarkDraft"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+comrak.workspace = true
+dunce.workspace = true
+git2.workspace = true
+serde.workspace = true
+similar.workspace = true
+thiserror.workspace = true
+unicode-segmentation.workspace = true
+
+[dev-dependencies]
+insta = { workspace = true, features = ["json"] }
+serde_json.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

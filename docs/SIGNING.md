@@ -228,10 +228,12 @@ signing, set up at that time.
    git push origin v0.1.0
    ```
 3. GitHub → **Actions** → watch **Release** (about 30 minutes). When it
-   finishes, a **draft release** appears under **Releases** with every
+   finishes, a **pre-release** appears under **Releases** with every
    package (Windows x64/x86/ARM64 installers, MSIs and portable zips; macOS
    universal, Apple silicon and Intel DMGs; Linux x64/ARM64 AppImage, deb
    and rpm; the headless CLI) and `SHA256SUMS.txt`.
+   It is published only when every build succeeded; otherwise it stays a
+   draft (visible only to you) until you fix the build and re-run it.
 
    To try the whole pipeline without a release, push a branch named
    `release-test/<anything>`: the same files are kept as workflow artifacts
@@ -241,7 +243,8 @@ signing, set up at that time.
      should say `Valid`.
    - macOS: `codesign --verify --deep --strict -v /Applications/MarkDraft.app` and
      `spctl -a -vv /Applications/MarkDraft.app` should say `accepted, source=Notarized Developer ID`.
-5. Edit the draft release notes and click **Publish release**.
+5. Edit the release notes if you like. When a signed version is ready for
+   everyone, untick **Set as a pre-release** so it becomes the latest release.
 
 ## What to keep safe
 

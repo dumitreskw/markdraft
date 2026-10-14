@@ -1,8 +1,9 @@
 name: Release
 
-# A `v*` tag builds every package into a draft release. Pushing a
-# `release-test/...` branch does the same builds as a dry run and keeps the
-# files as workflow artifacts only.
+# A `v*` tag builds every package into a draft release and publishes it (as a
+# pre-release) once every build has uploaded; if any build fails it stays a
+# draft. Pushing a `release-test/...` branch does the same builds as a dry run
+# and keeps the files as workflow artifacts only.
 on:
   push:
     tags: ["v*"]
@@ -200,3 +201,6 @@ jobs:
           path: SHA256SUMS.txt
       - if: env.PUBLISH == 'true'
         run: gh release upload "$TAG" SHA256SUMS.txt --clobber
+      - name: Publish the release
+        if: env.PUBLISH == 'true' && needs.build.result == 'success'
+        run: gh release edit "$TAG" --draft=false

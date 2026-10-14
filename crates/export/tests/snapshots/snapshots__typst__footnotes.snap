@@ -8,7 +8,7 @@ expression: src
 
 #md-title(title: "Footnotes", subtitle: none, author: none, date: none)
 
-Typst places notes at the bottom of the page.#footnote[The first footnote.]#label("md-0-fn-1") A note can be referenced
-twice.#footnote[A note referenced from two places.]#label("md-0-fn-shared") Here it is again.#footnote(label("md-0-fn-shared"));
+Typst places notes at the bottom of the page.#footnote[The first footnote.]#label("md-0:fn:1") A note can be referenced
+twice.#footnote[A note referenced from two places.]#label("md-0:fn:shared") Here it is again.#footnote(label("md-0:fn:shared"));
 
-Notes may contain formatting.#footnote[With #emph[emphasis];, #raw("code"); and a #link("https://example.com")[link];.]#label("md-0-fn-rich")
+Notes may contain formatting.#footnote[With #emph[emphasis];, #raw("code"); and a #link("https://example.com")[link];.]#label("md-0:fn:rich")

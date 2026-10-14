@@ -553,7 +553,8 @@ impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
     }
 
     fn footnote(&mut self, name: &str, out: &mut String) {
-        let label = format!("md-{}-fn-{name}", self.doc);
+        // Slugs never contain `:`, so this cannot collide with a heading label.
+        let label = format!("md-{}:fn:{name}", self.doc);
         let Some(def) = self.footnotes.get(name).copied() else {
             return;
         };
@@ -966,7 +967,7 @@ mod tests {
         let b = body("A[^n] B[^n] C[^m]\n\n[^n]: Note *n*.\n[^m]: Other.");
         assert_eq!(
             b,
-            "A#footnote[Note #emph[n];.]#label(\"md-0-fn-n\") B#footnote(label(\"md-0-fn-n\")); C#footnote[Other.]#label(\"md-0-fn-m\")"
+            "A#footnote[Note #emph[n];.]#label(\"md-0:fn:n\") B#footnote(label(\"md-0:fn:n\")); C#footnote[Other.]#label(\"md-0:fn:m\")"
         );
     }
 

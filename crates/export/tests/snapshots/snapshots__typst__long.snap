@@ -113,7 +113,7 @@ parse\-render\-discard pattern of a previewer well.
 
 MarkDraft enables the GitHub extensions that people expect: tables, task
 lists, strikethrough, autolinks and footnotes.#footnote[See the GitHub Flavored Markdown specification for the details of
-each extension.]#label("md-0-fn-gfm") Front matter delimited by
+each extension.]#label("md-0:fn:gfm") Front matter delimited by
 #raw("---"); is recognised and hidden from the preview; its #raw("title"); key overrides the
 first heading as the document title.
 

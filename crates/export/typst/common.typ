@@ -28,12 +28,18 @@
   show raw.where(block: true): set par(justify: false, leading: 0.6em)
   show math.equation: set text(font: math-font)
 
-  // Inline code: subtle pill.
-  show raw.where(block: false): it => box(
+  // Long unbroken runs (paths, hashes, URLs) in code may wrap anywhere
+  // rather than overflow the margin.
+  show raw: it => {
+    show regex("\S{28,}"): run => run.text.clusters().join("\u{200B}")
+    it
+  }
+
+  // Inline code: subtle tint that can wrap across lines.
+  show raw.where(block: false): it => highlight(
     fill: theme.code-bg,
-    inset: (x: 0.2em),
-    outset: (y: 0.28em),
     radius: 0.22em,
+    extent: 0.16em,
     it,
   )
   // Code blocks: tinted panel that may break across pages.
@@ -80,6 +86,8 @@
   )
   show table: set text(size: 0.92em)
   show table: set par(justify: false)
+  // Narrow columns: allow hyphenation so long words do not overflow cells.
+  show table: set text(hyphenate: true)
   show table.cell.where(y: 0): set text(weight: "semibold")
   show table: it => block(width: 100%, breakable: true, it)
 

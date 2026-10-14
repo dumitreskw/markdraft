@@ -71,9 +71,9 @@ Some details.
 #[
 #set heading(offset: 1)
 
-No title here, just text with a footnote.#footnote[Note.]#label("md-2-fn-1")
+No title here, just text with a footnote.#footnote[Note.]#label("md-2:fn:1")
 ]
 
 #md-chapter(title: none)
 
-Another untitled document with a footnote.#footnote[Same name, other document.]#label("md-3-fn-1")
+Another untitled document with a footnote.#footnote[Same name, other document.]#label("md-3:fn:1")

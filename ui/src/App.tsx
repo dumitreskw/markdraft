@@ -10,6 +10,7 @@ import { Preview } from "./components/Preview";
 import { Sidebar } from "./components/Sidebar";
 import { Splitter } from "./components/Splitter";
 import { NoDocument, Welcome } from "./components/Welcome";
+import { WorkspaceBar } from "./components/WorkspaceBar";
 import { ChangeBanner, DocToolbar, Outline, StatusBar, Tabs } from "./components/Workbench";
 import * as ipc from "./ipc";
 import { OUTLINE_BOUNDS, TREE_BOUNDS } from "./layout";
@@ -30,7 +31,20 @@ import {
   treeWidth,
   viewMode,
 } from "./state/ui";
-import { addRootAction, expanded, initWorkspaceEvents, opened, openPathAction, persistSession, reattach, scheduleSessionSave } from "./state/workspace";
+import {
+  addRootAction,
+  currentTab,
+  expanded,
+  initWorkspaceEvents,
+  opened,
+  openPathAction,
+  persistSession,
+  reattach,
+  restoreWindow,
+  scheduleSessionSave,
+  tabName,
+  workspaceTabs,
+} from "./state/workspace";
 
 export function App() {
   const [ready, setReady] = createSignal(false);
@@ -59,8 +73,8 @@ export function App() {
   // Window title: document, dirty marker, folder.
   createEffect(() => {
     const doc = activeDoc();
-    const o = opened();
-    const where = o?.workspace?.name ?? (o?.roots.length === 1 ? o.roots[0].name : o ? "Workspace" : "");
+    const tab = currentTab();
+    const where = tab ? tabName(tab) : "";
     const parts = [doc ? `${doc.status === "dirty" ? "● " : ""}${doc.rendered?.title ?? doc.name}` : "", where, "MarkDraft"].filter(Boolean);
     const title = parts.join(" — ");
     document.title = title;
@@ -139,8 +153,10 @@ export function App() {
       if (!ipc.inTauri()) return;
       ipc.highlightCss().then(setHighlight, () => {});
       const pending = await ipc.takeOpenRequest();
-      if (pending) await openPathAction(pending.path);
-      else await reattach();
+      // A reload keeps what Rust has open; a fresh start reopens the last tabs.
+      if (await reattach()) {
+        if (pending) await openPathAction(pending.path);
+      } else await restoreWindow(pending?.path ?? null);
     })();
   });
 
@@ -161,8 +177,11 @@ export function App() {
   });
 
   return (
-    <div class="app" classList={{ "focus-mode": focusMode(), loading: !ready() }}>
+    <div class="app" classList={{ "focus-mode": focusMode(), loading: !ready(), "has-tabs": workspaceTabs().length > 0 && !focusMode() }}>
       <Show when={opened()} fallback={<Welcome />}>
+        <Show when={!focusMode()}>
+          <WorkspaceBar />
+        </Show>
         <div class="panes">
           <Show when={sidebarVisible() && !focusMode()}>
             <aside id="sidebar" class="pane sidebar-pane" style={{ width: `${treeWidth()}px` }}>

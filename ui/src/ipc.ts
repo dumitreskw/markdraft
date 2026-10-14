@@ -53,14 +53,20 @@ export interface RootView {
 export interface WorkspaceView {
   file: string;
   name: string;
+  rootIds: number[];
 }
 
+/** The roots one open call added (one workspace tab). */
 export interface OpenResult {
-  generation: number;
   roots: RootView[];
   focus: string | null;
   workspace: WorkspaceView | null;
   sessionKey: string;
+}
+
+export interface AllRoots {
+  roots: RootView[];
+  workspaces: WorkspaceView[];
 }
 
 export interface DocFormat {
@@ -116,7 +122,6 @@ export interface RecentEntry {
 }
 
 export interface TreeBatch {
-  generation: number;
   rootId: number;
   nodes: TreeNode[];
   done: boolean;
@@ -124,7 +129,6 @@ export interface TreeBatch {
 }
 
 export interface FsChanged {
-  generation: number;
   rootId: number;
   changes: Change[];
 }
@@ -147,12 +151,33 @@ export const highlightCss = () => invoke<{ light: string; dark: string }>("highl
 export const openExternal = (url: string) => invoke<void>("open_external", { url });
 export const revealPath = (path: string) => invoke<void>("reveal_path", { path });
 
+/** One OS integration (Settings > System). */
+export interface IntegrationFeature {
+  supported: boolean;
+  enabled: boolean;
+  /** Installed for another copy of the app. */
+  stale: boolean;
+  detail: string;
+}
+
+export interface IntegrationStatus {
+  cli: IntegrationFeature;
+  contextMenu: IntegrationFeature;
+}
+
+export const integrationStatus = () => invoke<IntegrationStatus>("integration_status");
+export const setCliOnPath = (enable: boolean) => invoke<IntegrationFeature>("set_cli_on_path", { enable });
+export const setContextMenu = (enable: boolean) => invoke<IntegrationFeature>("set_context_menu", { enable });
+
 export const openPath = (path: string) => invoke<OpenResult>("open_path", { path });
-export const addRoot = (path: string) => invoke<OpenResult>("add_root", { path });
-export const removeRoot = (rootId: number) => invoke<OpenResult>("remove_root", { rootId });
+export const addRoot = (path: string, siblings: number[]) => invoke<OpenResult>("add_root", { path, siblings });
+export const removeRoots = (rootIds: number[]) => invoke<void>("remove_roots", { rootIds });
 export const rescanRoot = (rootId: number) => invoke<void>("rescan_root", { rootId });
-export const currentRoots = () => invoke<OpenResult>("current_roots");
-export const saveWorkspace = (file: string, name: string) => invoke<OpenResult>("save_workspace", { file, name });
+export const currentRoots = () => invoke<AllRoots>("current_roots");
+export const saveWorkspace = (file: string, name: string, rootIds: number[]) =>
+  invoke<OpenResult>("save_workspace", { file, name, rootIds });
+export const getWindowState = () => invoke<unknown | null>("get_window_state");
+export const setWindowState = (window: unknown) => invoke<void>("set_window_state", { window });
 
 export const readFile = (path: string) => invoke<LoadedDoc>("read_file", { path });
 export const saveFile = (path: string, text: string, format: DocFormat, expectedModifiedMs: number | null) =>
@@ -171,7 +196,8 @@ export const saveImage = (doc: string, name: string, bytes: Uint8Array) =>
   });
 /** Copies an image file into an `assets` folder next to `doc`; returns the link. */
 export const importImage = (doc: string, source: string) => invoke<string>("import_image", { doc, source });
-export const quickOpen = (query: string, limit: number) => invoke<QuickOpenItem[]>("quick_open", { query, limit });
+export const quickOpen = (query: string, limit: number, rootIds: number[] | null = null) =>
+  invoke<QuickOpenItem[]>("quick_open", { query, limit, rootIds });
 
 // ----------------------------------------------------------------- export
 
@@ -221,10 +247,11 @@ export interface Backlink {
   text: string;
 }
 
-export const backlinks = (path: string) => invoke<Backlink[]>("backlinks", { path });
+export const backlinks = (path: string, rootIds: number[] | null = null) =>
+  invoke<Backlink[]>("backlinks", { path, rootIds });
 
-export const searchText = (query: TextQuery, maxFiles: number) =>
-  invoke<FileMatches[]>("search_text", { query, maxFiles });
+export const searchText = (query: TextQuery, maxFiles: number, rootIds: number[] | null = null) =>
+  invoke<FileMatches[]>("search_text", { query, maxFiles, rootIds });
 
 // -------------------------------------------------------------------- git
 

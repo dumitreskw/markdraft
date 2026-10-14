@@ -17,7 +17,9 @@ const COMMANDS: &[&str] = &[
     "reveal_path",
     "open_path",
     "add_root",
-    "remove_root",
+    "remove_roots",
+    "get_window_state",
+    "set_window_state",
     "rescan_root",
     "current_roots",
     "save_workspace",
@@ -40,6 +42,9 @@ const COMMANDS: &[&str] = &[
     "git_status",
     "git_history",
     "diff_document",
+    "integration_status",
+    "set_cli_on_path",
+    "set_context_menu",
 ];
 
 fn main() {

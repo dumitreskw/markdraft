@@ -220,6 +220,132 @@ svg {
   visibility: hidden;
 }
 
+.app.has-tabs {
+  grid-template-rows: auto 1fr auto;
+}
+
+/* Workspace tabs: one per folder, file or workspace open in the window. */
+.workspace-bar {
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-pane);
+  scrollbar-width: none;
+}
+
+.ws-tab {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  padding: 0 4px 0 12px;
+  border-right: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12.5px;
+  user-select: none;
+}
+
+.ws-tab:hover {
+  background: var(--bg-hover);
+}
+
+.ws-tab.active {
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.ws-tab.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+.ws-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.ws-icon {
+  display: grid;
+  place-items: center;
+  color: var(--text-faint);
+}
+
+.ws-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ws-tab.active .ws-icon {
+  color: var(--accent);
+}
+
+.ws-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-dirty {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.ws-close,
+.ws-new {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.ws-close {
+  width: 20px;
+  height: 20px;
+}
+
+.ws-close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ws-tab:not(.active):not(:hover) .ws-close {
+  visibility: hidden;
+}
+
+.ws-new {
+  width: 30px;
+  margin: 3px 4px;
+}
+
+.ws-new svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ws-close:hover,
+.ws-new:hover {
+  background: var(--bg-active);
+  color: var(--text);
+}
+
 .panes {
   display: flex;
   min-height: 0;
@@ -1979,4 +2105,37 @@ svg {
 .line-insert del,
 .line-delete ins {
   display: none;
+}
+
+/* Settings > System */
+.integration-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.integration-row > small {
+  padding-left: 26px;
+  overflow-wrap: anywhere;
+}
+
+.integration-example {
+  display: block;
+  margin: -4px 0 12px 26px;
+  line-height: 1.7;
+}
+
+.integration-stale {
+  color: var(--warning, var(--danger));
+}
+
+.link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
 }

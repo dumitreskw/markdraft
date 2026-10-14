@@ -405,10 +405,75 @@ function SettingsDialog() {
         </section>
         <section>
           <h3>Startup</h3>
-          {check("restoreSession", "Reopen tabs and layout", "per folder or workspace")}
+          {check("restoreSession", "Reopen workspace tabs and layout", "from the last run")}
         </section>
+        <Show when={ipc.inTauri()}>
+          <SystemIntegration />
+        </Show>
       </div>
     </Dialog>
+  );
+}
+
+/** Settings > System: the `markdraft` command and folder menu entries. */
+function SystemIntegration() {
+  const [status, { mutate }] = createResource(() => ipc.integrationStatus().catch(() => null));
+  const [busy, setBusy] = createSignal(false);
+
+  const toggle = async (which: "cli" | "contextMenu", enable: boolean) => {
+    setBusy(true);
+    try {
+      const feature = which === "cli" ? await ipc.setCliOnPath(enable) : await ipc.setContextMenu(enable);
+      mutate((s) => (s ? { ...s, [which]: feature } : s));
+    } catch (e) {
+      toast(ipc.errorMessage(e), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const row = (which: "cli" | "contextMenu", label: string) => {
+    const f = () => status()?.[which];
+    return (
+      <Show when={f()}>
+        {(feature) => (
+          <div class="integration-row">
+            <label class="check-row">
+              <input
+                type="checkbox"
+                checked={feature().enabled}
+                disabled={busy() || !feature().supported}
+                onChange={(e) => void toggle(which, e.currentTarget.checked)}
+              />
+              <span>{label}</span>
+            </label>
+            <small class="muted">{feature().detail}</small>
+            <Show when={feature().stale}>
+              <small class="integration-stale">
+                Set up for another copy of MarkDraft.{" "}
+                <button type="button" class="link-button" disabled={busy()} onClick={() => void toggle(which, true)}>
+                  Point it here
+                </button>
+              </small>
+            </Show>
+          </div>
+        )}
+      </Show>
+    );
+  };
+
+  return (
+    <section>
+      <h3>System</h3>
+      {row("cli", "markdraft command in the terminal")}
+      <Show when={status()?.cli.enabled}>
+        <small class="muted integration-example">
+          <code>markdraft</code> opens the current folder · <code>markdraft notes</code> opens a folder or file ·{" "}
+          <code>markdraft export a.md</code> makes a PDF
+        </small>
+      </Show>
+      {row("contextMenu", "“Open with MarkDraft” on folders")}
+    </section>
   );
 }
 

@@ -1,5 +1,7 @@
-//! Opening folders, files and workspaces: maintains the root list and runs
-//! each root's scan and watcher on background threads.
+//! Opening folders, files and workspaces. Several sets of roots can be open
+//! at once (one per workspace tab in the UI); each root runs its own scan
+//! and watcher on background threads. Root ids are never reused, so events
+//! from a root that has been closed are simply dropped.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -32,18 +34,27 @@ pub struct RootView {
 pub struct WorkspaceView {
     pub file: PathBuf,
     pub name: String,
+    pub root_ids: Vec<RootId>,
 }
 
+/// What one open call added: the roots for one workspace tab.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenResult {
-    pub generation: u64,
     pub roots: Vec<RootView>,
     /// File to show first (single-file mode).
     pub focus: Option<PathBuf>,
     pub workspace: Option<WorkspaceView>,
     /// Key for the UI's saved session (tabs, layout) for this set of roots.
     pub session_key: String,
+}
+
+/// Everything open, for a UI that reloads and has to rebuild its tabs.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AllRoots {
+    pub roots: Vec<RootView>,
+    pub workspaces: Vec<WorkspaceView>,
 }
 
 struct RootSpec {
@@ -53,14 +64,14 @@ struct RootSpec {
     max_depth: Option<usize>,
 }
 
-/// Opens a folder, a Markdown file (with its siblings) or a workspace file,
-/// replacing whatever was open.
+/// Opens a folder, a Markdown file (with its siblings) or a workspace file
+/// as a new set of roots, next to whatever is already open.
 pub fn open(app: &AppHandle, path: &Path) -> Result<OpenResult, CmdError> {
     let path = dunce::canonicalize(path)
         .map_err(|_| CmdError::NotFound(format!("{} does not exist", path.display())))?;
     let state = app.state::<AppState>();
 
-    let (specs, workspace, focus, kind) = if path.is_dir() {
+    let (specs, def, focus, kind) = if path.is_dir() {
         let spec = RootSpec {
             path: path.clone(),
             name: None,
@@ -74,11 +85,7 @@ pub fn open(app: &AppHandle, path: &Path) -> Result<OpenResult, CmdError> {
     {
         let def = WorkspaceDef::load(&path)?;
         let specs = workspace_specs(&def, &path)?;
-        let ws = OpenWorkspace {
-            file: path.clone(),
-            def,
-        };
-        (specs, Some(ws), None, RecentKind::Workspace)
+        (specs, Some(def), None, RecentKind::Workspace)
     } else {
         let parent = path
             .parent()
@@ -92,7 +99,17 @@ pub fn open(app: &AppHandle, path: &Path) -> Result<OpenResult, CmdError> {
         (vec![spec], None, Some(path.clone()), RecentKind::File)
     };
 
-    let mut result = replace_roots(app, &state, specs, workspace);
+    let ids = add_specs(app, &state, specs);
+    if let Some(def) = def {
+        let mut roots = state.roots_write();
+        roots.workspaces.retain(|w| w.file != path);
+        roots.workspaces.push(OpenWorkspace {
+            file: path.clone(),
+            def,
+            root_ids: ids.clone(),
+        });
+    }
+    let mut result = result_for(&state, &ids);
     result.focus = focus;
     remember(&state, &path, kind, &result);
     Ok(result)
@@ -120,30 +137,24 @@ fn workspace_specs(def: &WorkspaceDef, file: &Path) -> Result<Vec<RootSpec>, Cmd
     Ok(specs)
 }
 
-fn replace_roots(
-    app: &AppHandle,
-    state: &AppState,
-    specs: Vec<RootSpec>,
-    workspace: Option<OpenWorkspace>,
-) -> OpenResult {
-    let (generation, to_scan) = {
+/// Registers roots and starts scanning them; returns their ids.
+fn add_specs(app: &AppHandle, state: &AppState, specs: Vec<RootSpec>) -> Vec<RootId> {
+    let mut ids = Vec::new();
+    let mut jobs = Vec::new();
+    {
         let mut roots = state.roots_write();
-        roots.generation += 1;
-        roots.list.clear(); // drops the old watchers
-        roots.workspace = workspace;
-        let mut to_scan = Vec::new();
         for spec in specs {
             let id = roots.next_id();
             let entry = new_entry(id, spec);
-            to_scan.push(scan_job(&entry));
+            jobs.push(scan_job(&entry));
             roots.list.push(entry);
+            ids.push(id);
         }
-        (roots.generation, to_scan)
-    };
-    for job in to_scan {
-        spawn_scan(app.clone(), generation, job);
     }
-    view(state)
+    for job in jobs {
+        spawn_scan(app.clone(), job);
+    }
+    ids
 }
 
 fn new_entry(id: RootId, spec: RootSpec) -> RootEntry {
@@ -159,8 +170,10 @@ fn new_entry(id: RootId, spec: RootSpec) -> RootEntry {
     }
 }
 
-/// Adds a folder to the open set (turning it into an unsaved workspace).
-pub fn add_root(app: &AppHandle, path: &Path) -> Result<OpenResult, CmdError> {
+/// Adds a folder next to `siblings` (the roots of the same workspace tab).
+/// A single-file sibling becomes a full folder, since the tab is now a
+/// workspace. Returns just the new root.
+pub fn add_root(app: &AppHandle, path: &Path, siblings: &[RootId]) -> Result<OpenResult, CmdError> {
     let path = dunce::canonicalize(path)
         .map_err(|_| CmdError::NotFound(format!("{} does not exist", path.display())))?;
     if !path.is_dir() {
@@ -170,76 +183,99 @@ pub fn add_root(app: &AppHandle, path: &Path) -> Result<OpenResult, CmdError> {
         )));
     }
     let state = app.state::<AppState>();
-    let job = {
+    let (rules, widened) = {
         let mut roots = state.roots_write();
-        if roots.list.iter().any(|r| r.path == path) {
-            None
-        } else {
-            let rules = roots
-                .list
-                .first()
-                .map(|r| r.rules.clone())
-                .unwrap_or_default();
-            // A single-file root becomes a full folder once others join.
-            for r in &mut roots.list {
-                r.max_depth = None;
-            }
-            let id = roots.next_id();
-            let entry = new_entry(
-                id,
-                RootSpec {
-                    path,
-                    name: None,
-                    rules,
-                    max_depth: None,
-                },
-            );
-            let job = scan_job(&entry);
-            roots.list.push(entry);
-            Some((roots.generation, job))
+        if let Some(existing) = roots
+            .list
+            .iter()
+            .find(|r| r.path == path && siblings.contains(&r.id))
+        {
+            let id = existing.id;
+            drop(roots);
+            return Ok(result_for(&state, &[id]));
         }
+        let rules = siblings
+            .first()
+            .and_then(|id| roots.get(*id))
+            .map(|r| r.rules.clone())
+            .unwrap_or_default();
+        let mut widened = Vec::new();
+        for id in siblings {
+            if let Some(r) = roots.get_mut(*id)
+                && r.max_depth == Some(1)
+            {
+                r.max_depth = None;
+                r.watcher = None;
+                widened.push(scan_job(r));
+            }
+        }
+        (rules, widened)
     };
-    if let Some((generation, job)) = job {
-        spawn_scan(app.clone(), generation, job);
+    for job in widened {
+        spawn_scan(app.clone(), job);
     }
-    Ok(view(&state))
+    let ids = add_specs(
+        app,
+        &state,
+        vec![RootSpec {
+            path,
+            name: None,
+            rules,
+            max_depth: None,
+        }],
+    );
+    Ok(result_for(&state, &ids))
 }
 
-pub fn remove_root(app: &AppHandle, id: RootId) -> OpenResult {
+/// Closes roots (their watchers stop) and forgets workspaces left empty.
+pub fn remove_roots(app: &AppHandle, ids: &[RootId]) {
     let state = app.state::<AppState>();
-    state.roots_write().list.retain(|r| r.id != id);
-    view(&state)
+    let mut roots = state.roots_write();
+    roots.list.retain(|r| !ids.contains(&r.id));
+    for w in &mut roots.workspaces {
+        w.root_ids.retain(|id| !ids.contains(id));
+    }
+    roots.workspaces.retain(|w| !w.root_ids.is_empty());
 }
 
 pub fn rescan_root(app: &AppHandle, id: RootId) -> Result<(), CmdError> {
     let state = app.state::<AppState>();
-    let (generation, job) = {
+    let job = {
         let mut roots = state.roots_write();
-        let generation = roots.generation;
         let entry = roots
             .get_mut(id)
             .ok_or_else(|| CmdError::NotFound(format!("root {id} is not open")))?;
         entry.watcher = None;
-        (generation, scan_job(entry))
+        scan_job(entry)
     };
-    spawn_scan(app.clone(), generation, job);
+    spawn_scan(app.clone(), job);
     Ok(())
 }
 
-/// Saves the open roots as a workspace file and makes it the open workspace.
-pub fn save_workspace(app: &AppHandle, file: &Path, name: &str) -> Result<OpenResult, CmdError> {
+/// Saves the given roots (one workspace tab) as a workspace file.
+pub fn save_workspace(
+    app: &AppHandle,
+    file: &Path,
+    name: &str,
+    root_ids: &[RootId],
+) -> Result<OpenResult, CmdError> {
     let state = app.state::<AppState>();
     let base = file.parent().unwrap_or(Path::new("."));
     let def = {
         let roots = state.roots_read();
+        let members: Vec<&RootEntry> = root_ids.iter().filter_map(|id| roots.get(*id)).collect();
+        if members.is_empty() {
+            return Err(CmdError::Invalid("there are no folders to save".into()));
+        }
+        // Keep discovery and export settings of the workspace being re-saved.
         let mut def = roots
-            .workspace
-            .as_ref()
+            .workspaces
+            .iter()
+            .find(|w| w.root_ids.iter().any(|id| root_ids.contains(id)))
             .map(|w| w.def.clone())
             .unwrap_or_else(|| WorkspaceDef::new(name));
         def.name = name.to_owned();
-        def.roots = roots
-            .list
+        def.roots = members
             .iter()
             .map(|r| workspace::Root {
                 // Relative paths keep a committed workspace portable.
@@ -250,43 +286,85 @@ pub fn save_workspace(app: &AppHandle, file: &Path, name: &str) -> Result<OpenRe
         def
     };
     def.save(file)?;
-    {
+    let widened = {
         let mut roots = state.roots_write();
-        roots.workspace = Some(OpenWorkspace {
+        roots
+            .workspaces
+            .retain(|w| w.file != file && !w.root_ids.iter().any(|id| root_ids.contains(id)));
+        roots.workspaces.push(OpenWorkspace {
             file: file.to_owned(),
             def,
+            root_ids: root_ids.to_vec(),
         });
-        for r in &mut roots.list {
-            r.max_depth = None;
+        let mut widened = Vec::new();
+        for id in root_ids {
+            if let Some(r) = roots.get_mut(*id)
+                && r.max_depth == Some(1)
+            {
+                r.max_depth = None;
+                r.watcher = None;
+                widened.push(scan_job(r));
+            }
         }
+        widened
+    };
+    for job in widened {
+        spawn_scan(app.clone(), job);
     }
-    let result = view(&state);
+    let result = result_for(&state, root_ids);
     remember(&state, file, RecentKind::Workspace, &result);
     Ok(result)
 }
 
-/// Describes the current roots for the UI.
-pub fn view(state: &AppState) -> OpenResult {
+fn root_view(r: &RootEntry) -> RootView {
+    RootView {
+        id: r.id,
+        path: r.path.clone(),
+        name: r.name.clone(),
+        single_file: r.max_depth == Some(1),
+    }
+}
+
+/// Describes a set of roots (one tab) for the UI.
+pub fn result_for(state: &AppState, ids: &[RootId]) -> OpenResult {
     let roots = state.roots_read();
-    let paths: Vec<_> = roots.list.iter().map(|r| r.path.clone()).collect();
-    OpenResult {
-        generation: roots.generation,
-        roots: roots
-            .list
-            .iter()
-            .map(|r| RootView {
-                id: r.id,
-                path: r.path.clone(),
-                name: r.name.clone(),
-                single_file: r.max_depth == Some(1),
-            })
-            .collect(),
-        focus: None,
-        workspace: roots.workspace.as_ref().map(|w| WorkspaceView {
+    let list: Vec<RootView> = ids
+        .iter()
+        .filter_map(|id| roots.get(*id))
+        .map(root_view)
+        .collect();
+    let paths: Vec<_> = list.iter().map(|r| r.path.clone()).collect();
+    let workspace = roots
+        .workspaces
+        .iter()
+        .find(|w| !ids.is_empty() && ids.iter().all(|id| w.root_ids.contains(id)))
+        .map(|w| WorkspaceView {
             file: w.file.clone(),
             name: w.def.name.clone(),
-        }),
+            root_ids: w.root_ids.clone(),
+        });
+    OpenResult {
+        roots: list,
+        focus: None,
+        workspace,
         session_key: session_key(&paths),
+    }
+}
+
+/// Every open root and workspace.
+pub fn all(state: &AppState) -> AllRoots {
+    let roots = state.roots_read();
+    AllRoots {
+        roots: roots.list.iter().map(root_view).collect(),
+        workspaces: roots
+            .workspaces
+            .iter()
+            .map(|w| WorkspaceView {
+                file: w.file.clone(),
+                name: w.def.name.clone(),
+                root_ids: w.root_ids.clone(),
+            })
+            .collect(),
     }
 }
 
@@ -325,13 +403,11 @@ fn scan_job(entry: &RootEntry) -> ScanJob {
     }
 }
 
-fn is_current(app: &AppHandle, generation: u64, id: RootId) -> bool {
-    let state = app.state::<AppState>();
-    let roots = state.roots_read();
-    roots.generation == generation && roots.get(id).is_some()
+fn is_open(app: &AppHandle, id: RootId) -> bool {
+    app.state::<AppState>().roots_read().get(id).is_some()
 }
 
-fn spawn_scan(app: AppHandle, generation: u64, job: ScanJob) {
+fn spawn_scan(app: AppHandle, job: ScanJob) {
     std::thread::spawn(move || {
         job.index.write().unwrap_or_else(|p| p.into_inner()).clear();
         let req = ScanRequest {
@@ -340,12 +416,11 @@ fn spawn_scan(app: AppHandle, generation: u64, job: ScanJob) {
             max_depth: job.max_depth,
         };
         let stats = scan(&req, BATCH_SIZE, |nodes| {
-            if !is_current(&app, generation, job.id) {
+            if !is_open(&app, job.id) {
                 return;
             }
             index_nodes(&job.index, &nodes);
             let batch = TreeBatch {
-                generation,
                 root_id: job.id,
                 nodes,
                 done: false,
@@ -355,7 +430,7 @@ fn spawn_scan(app: AppHandle, generation: u64, job: ScanJob) {
                 tracing::error!("failed to emit tree batch: {e}");
             }
         });
-        if !is_current(&app, generation, job.id) {
+        if !is_open(&app, job.id) {
             return;
         }
         tracing::info!(
@@ -368,18 +443,17 @@ fn spawn_scan(app: AppHandle, generation: u64, job: ScanJob) {
         let _ = app.emit(
             TREE_BATCH,
             TreeBatch {
-                generation,
                 root_id: job.id,
                 nodes: Vec::new(),
                 done: true,
                 elapsed_ms: Some(u64::try_from(stats.elapsed.as_millis()).unwrap_or(u64::MAX)),
             },
         );
-        start_watcher(&app, generation, job);
+        start_watcher(&app, job);
     });
 }
 
-fn start_watcher(app: &AppHandle, generation: u64, job: ScanJob) {
+fn start_watcher(app: &AppHandle, job: ScanJob) {
     let state = app.state::<AppState>();
     let emitter = app.clone();
     let index = Arc::clone(&job.index);
@@ -390,7 +464,7 @@ fn start_watcher(app: &AppHandle, generation: u64, job: ScanJob) {
         job.rules.clone(),
         state.self_writes.clone(),
         move |mut changes: Vec<Change>| {
-            if !is_current(&emitter, generation, id) {
+            if !is_open(&emitter, id) {
                 return;
             }
             if shallow {
@@ -403,7 +477,6 @@ fn start_watcher(app: &AppHandle, generation: u64, job: ScanJob) {
             let _ = emitter.emit(
                 FS_CHANGED,
                 FsChanged {
-                    generation,
                     root_id: id,
                     changes,
                 },
@@ -413,8 +486,9 @@ fn start_watcher(app: &AppHandle, generation: u64, job: ScanJob) {
     match watcher {
         Ok(w) => {
             let mut roots = state.roots_write();
-            if roots.generation == generation
-                && let Some(entry) = roots.get_mut(id)
+            // A rescan may have started a newer watcher meanwhile; keep one.
+            if let Some(entry) = roots.get_mut(id)
+                && entry.watcher.is_none()
             {
                 entry.watcher = Some(w);
             }

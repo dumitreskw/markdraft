@@ -18,7 +18,8 @@ const caseInsensitive = () =>
   typeof navigator === "undefined" || /Win|Mac/.test(navigator.userAgent ?? "");
 
 function normalise(path: string): string {
-  const p = path.replace(/\\/g, "/").replace(/\/+$/, "");
+  // `C:\a\\b` and `C:/a/b/` are the same folder; a UNC `//` prefix stays.
+  const p = path.replace(/\\/g, "/").replace(/(?<!^)\/+/g, "/").replace(/\/+$/, "");
   return caseInsensitive() ? p.toLowerCase() : p;
 }
 

@@ -60,10 +60,13 @@ tauri-plugin-opener = "2.7.1"
 
 # Testing
 tempfile = "3.27.0"
+windows-sys = "0.61.2"
+winreg = "0.56.0"
 insta = "1.49.0"
 
 [workspace.lints.rust]
-unsafe_code = "forbid"
+# `deny`, not `forbid`, so src-tauri/src/win32.rs can opt in for two FFI calls.
+unsafe_code = "deny"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }

@@ -5,7 +5,7 @@ import { cursor } from "../state/cursor";
 import { revealLine, topLine } from "../editor/sync";
 import { activeDoc, activePath, closeTab, docs, keepMine, openDoc, reloadFromDisk, reveal, saveDoc, tabs } from "../state/docs";
 import { setViewMode, viewMode, setModal, outlineVisible, setOutlineVisible } from "../state/ui";
-import { allDocs, gitState, gitStatusOf, lastScanMs, locate, treeVersionSignal as rootsVersion } from "../state/workspace";
+import { allDocs, currentGitRoots, gitStatusOf, lastScanMs, locate, rootIds, treeVersionSignal as rootsVersion } from "../state/workspace";
 
 const docTitle = (path: string) => allDocs().find((d) => d.path === path)?.title ?? null;
 import { diffRequest } from "../state/diff";
@@ -97,7 +97,7 @@ export function Tabs() {
 export function DocToolbar() {
   const status = () => (activePath() ? gitStatusOf(activePath()!) : undefined);
   const tracked = () => !!status() && status()!.kind !== "untracked";
-  const inRepo = () => gitState.roots.length > 0;
+  const inRepo = () => currentGitRoots().length > 0;
   const modeButton = (mode: "read" | "edit" | "split", label: string, icon: () => any, keys: string) => (
     <button type="button" aria-pressed={viewMode() === mode} onClick={() => setViewMode(mode)} title={`${label} (${displayKeys(keys)})`}>
       {icon()}
@@ -230,7 +230,7 @@ function Backlinks() {
         setTimeout(async () => {
           if (mine !== seq) return;
           try {
-            const found = await ipc.backlinks(path);
+            const found = await ipc.backlinks(path, rootIds());
             if (mine === seq) setLinks(found);
           } catch {
             if (mine === seq) setLinks([]);
@@ -338,7 +338,7 @@ export function StatusBar() {
   const branch = () => {
     const p = activePath();
     const loc = p ? locate(p) : null;
-    const g = gitState.roots.find((r) => loc && r.root === loc.root.path) ?? gitState.roots[0];
+    const g = currentGitRoots().find((r) => loc && r.root === loc.root.path) ?? currentGitRoots()[0];
     return g?.info.branch ?? null;
   };
   const format = () => {

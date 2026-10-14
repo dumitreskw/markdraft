@@ -120,6 +120,15 @@ impl AppStore {
         Ok(items)
     }
 
+    /// Which workspace tabs were open in the window (shape owned by the UI).
+    pub fn window_state(&self) -> Option<Value> {
+        self.read_json("window.json")
+    }
+
+    pub fn save_window_state(&self, state: &Value) -> Result<(), StoreError> {
+        self.write_json("window.json", state)
+    }
+
     /// UI session state (open tabs, layout) for a set of roots.
     pub fn session(&self, key: &str) -> Option<Value> {
         self.read_json(&session_file(key))

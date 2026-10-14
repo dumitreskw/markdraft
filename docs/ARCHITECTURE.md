@@ -26,7 +26,8 @@ markdraft/
 ## Data flow
 
 1. `open_path` resolves a folder, a file (its folder, one level deep) or a
-   workspace file into roots. Each root is scanned on a background thread;
+   workspace file into roots, added to the window's set; the UI groups the
+   roots of each call into one workspace tab. Each root is scanned on a background thread;
    nodes stream to the UI as `tree://batch` events and into a per-root index
    (path → title) used by quick open and search.
 2. After the scan a debounced watcher starts per root. Its diffs update the
@@ -59,31 +60,33 @@ Each command is listed in `src-tauri/build.rs` (`COMMANDS`) and granted in
 | App | `get_session(key) -> Option<Value>` / `set_session(key, session: Value)` |
 | App | `highlight_css() -> { light, dark }` |
 | App | `open_external(url)` (http, https, mailto only) / `reveal_path(path)` |
-| Roots | `open_path(path) -> OpenResult` |
-| Roots | `add_root(path) -> OpenResult` / `remove_root(root_id) -> OpenResult` / `rescan_root(root_id)` |
-| Roots | `current_roots() -> OpenResult` |
-| Roots | `save_workspace(file, name) -> OpenResult` |
+| Roots | `open_path(path) -> OpenResult` (adds the roots of one workspace tab) |
+| Roots | `add_root(path, siblings: Vec<RootId>) -> OpenResult` / `remove_roots(root_ids)` / `rescan_root(root_id)` |
+| Roots | `current_roots() -> AllRoots { roots, workspaces }` (used after a WebView reload) |
+| Roots | `save_workspace(file, name, root_ids) -> OpenResult` |
+| Roots | `get_window_state() -> Option<Value>` / `set_window_state(window: Value)` (open workspace tabs) |
 | Docs | `read_file(path) -> LoadedDoc` |
 | Docs | `save_file(path, text, format: DocFormat, expected_modified_ms: Option<i64>) -> SaveOutcome` |
 | Docs | `render_markdown(text, path: Option<PathBuf>) -> RenderedDoc` |
 | Docs | `create_entry(parent, name, is_dir) -> PathBuf` / `rename_entry(from, to) -> PathBuf` |
 | Docs | `trash_entry(path)` / `duplicate_entry(path) -> PathBuf` |
-| Search | `quick_open(query, limit) -> Vec<QuickOpenItem>` |
-| Search | `search_text(query: TextQuery, max_files) -> Vec<FileMatches>` |
+| Search | `quick_open(query, limit, root_ids: Option<Vec<RootId>>) -> Vec<QuickOpenItem>` |
+| Search | `search_text(query: TextQuery, max_files, root_ids) -> Vec<FileMatches>` / `backlinks(path, root_ids) -> Vec<Backlink>` |
 | Git | `git_info() -> Vec<GitRoot>` / `git_status(root) -> Vec<FileStatus>` |
 | Git | `git_history(path, limit) -> Vec<CommitInfo>` |
 | Git | `diff_document(path, old: RevArg, new: RevArg) -> DiffView` (RevArg: head, index, workdir, commit, parentOf, text) |
 | Export | `export_pdf(path, text, out, options: ExportOptions, diagrams: HashMap<usize, String>)` |
 | Export | `export_folder_pdf(folder, out, options) -> usize` |
 | Export | `write_export(out, contents)` |
+| System | `integration_status() -> { cli, contextMenu }` / `set_cli_on_path(enable) -> Feature` / `set_context_menu(enable) -> Feature` |
 
 ### Events (Rust → UI)
 
 | Name | Payload |
 |---|---|
 | `app://open-path` | `OpenRequest { path }` — second launch, file association, macOS open |
-| `tree://batch` | `TreeBatch { generation, root_id, nodes: Vec<TreeNode>, done, elapsed_ms }` |
-| `fs://changed` | `FsChanged { generation, root_id, changes: Vec<Change> }` (added, removed, renamed, modified, rescan) |
+| `tree://batch` | `TreeBatch { root_id, nodes: Vec<TreeNode>, done, elapsed_ms }` |
+| `fs://changed` | `FsChanged { root_id, changes: Vec<Change> }` (added, removed, renamed, modified, rescan) |
 
 ### Custom protocol
 

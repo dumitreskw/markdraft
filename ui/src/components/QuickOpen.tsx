@@ -4,7 +4,7 @@ import * as ipc from "../ipc";
 import { relativeTo } from "../paths";
 import { docs, openDoc, recentDocs } from "../state/docs";
 import { setModal } from "../state/ui";
-import { roots } from "../state/workspace";
+import { rootIds, roots } from "../state/workspace";
 import { fuzzyIncludes } from "../state/tree";
 
 interface Item {
@@ -35,7 +35,7 @@ export function QuickOpen(props: { commands?: boolean }) {
         return;
       }
       try {
-        setFiles(await ipc.quickOpen(q.trim(), 50));
+        setFiles(await ipc.quickOpen(q.trim(), 50, rootIds()));
       } catch {
         setFiles([]);
       }

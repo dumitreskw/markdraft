@@ -36,13 +36,20 @@ pub async fn quick_open(
     state: State<'_, AppState>,
     query: String,
     limit: u32,
+    root_ids: Option<Vec<RootId>>,
 ) -> Result<Vec<QuickOpenItem>, CmdError> {
     let candidates: Vec<Candidate> = {
         let roots = state.roots_read();
-        let several = roots.list.len() > 1;
+        let several = roots
+            .list
+            .iter()
+            .filter(|r| root_ids.as_ref().is_none_or(|ids| ids.contains(&r.id)))
+            .count()
+            > 1;
         roots
             .list
             .iter()
+            .filter(|r| root_ids.as_ref().is_none_or(|ids| ids.contains(&r.id)))
             .flat_map(|root| {
                 let index = root.index.read().unwrap_or_else(|p| p.into_inner());
                 index
@@ -70,12 +77,14 @@ pub async fn search_text(
     state: State<'_, AppState>,
     query: search::TextQuery,
     max_files: u32,
+    root_ids: Option<Vec<RootId>>,
 ) -> Result<Vec<search::FileMatches>, CmdError> {
     let files: Vec<PathBuf> = {
         let roots = state.roots_read();
         roots
             .list
             .iter()
+            .filter(|r| root_ids.as_ref().is_none_or(|ids| ids.contains(&r.id)))
             .flat_map(|root| {
                 let index = root.index.read().unwrap_or_else(|p| p.into_inner());
                 index
@@ -97,13 +106,18 @@ pub async fn search_text(
 pub async fn backlinks(
     state: State<'_, AppState>,
     path: PathBuf,
+    root_ids: Option<Vec<RootId>>,
 ) -> Result<Vec<search::Backlink>, CmdError> {
     let path = state.allowed_path(&path)?;
     let (files, title) = {
         let roots = state.roots_read();
         let mut title = None;
         let mut files = Vec::new();
-        for root in &roots.list {
+        for root in roots
+            .list
+            .iter()
+            .filter(|r| root_ids.as_ref().is_none_or(|ids| ids.contains(&r.id)))
+        {
             let index = root.index.read().unwrap_or_else(|p| p.into_inner());
             for (rel, t) in index.iter() {
                 let abs = root.path.join(rel);

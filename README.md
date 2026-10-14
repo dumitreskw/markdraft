@@ -11,6 +11,12 @@ Files stay plain `.md` on disk — no database, no lock-in.
 - Open a folder, a single file (its sibling documents appear too) or a saved
   multi-folder workspace — from the menu, by dropping it on the window, or
   `markdraft <path>`.
+- Several folders or workspaces open side by side as **workspace tabs** in one
+  window; search, quick open and Git follow the current tab. Tabs come back
+  after a restart.
+- Optional system integration (Settings → System): type `markdraft` in a
+  terminal to open the current folder, and right-click a folder for
+  **Open with MarkDraft** / **Open MarkDraft here** (Windows, Linux).
 - File tree with document titles (or file names), natural sorting, filter,
   keyboard navigation and type-ahead; live updates as files change on disk.
 - Respects `.gitignore`, `.ignore` and `.markdraftignore`; 10,000 files show
@@ -61,6 +67,7 @@ Files stay plain `.md` on disk — no database, no lock-in.
 | Export to PDF | `Ctrl+Shift+E` |
 | Bold / italic / link | `Ctrl+B` / `Ctrl+I` / `Ctrl+K` |
 | Toggle sidebar / outline / focus mode | `Ctrl+\` / `Ctrl+Shift+\` / `F11` |
+| Next / previous workspace tab, close it | `Ctrl+Alt+PgDn` / `Ctrl+Alt+PgUp`, `Ctrl+Alt+W` |
 | Settings | `Ctrl+,` |
 
 ## Develop

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-cli-on-path"
+description = "Enables the set_cli_on_path command without any pre-configured scope."
+commands.allow = ["set_cli_on_path"]
+
+[[permission]]
+identifier = "deny-set-cli-on-path"
+description = "Denies the set_cli_on_path command without any pre-configured scope."
+commands.deny = ["set_cli_on_path"]

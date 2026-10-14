@@ -404,4 +404,4 @@ export function renamedByApp(from: string, to: string) {
 
 /** Whether any open document has changes not yet on disk. */
 export const hasUnsaved = () =>
-  tabs().some((p) => ["dirty", "saving", "conflict", "error"].includes(docs[p]?.status ?? "clean"));
+  Object.values(docs).some((d) => ["dirty", "saving", "conflict", "error"].includes(d.status));

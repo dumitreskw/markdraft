@@ -24,7 +24,6 @@
     "allow-reveal-path",
     "allow-open-path",
     "allow-add-root",
-    "allow-remove-root",
     "allow-rescan-root",
     "allow-current-roots",
     "allow-save-workspace",
@@ -40,12 +39,18 @@
     "allow-git-status",
     "allow-git-history",
     "allow-diff-document",
+    "allow-integration-status",
+    "allow-set-cli-on-path",
+    "allow-set-context-menu",
     "allow-search-text",
     "allow-write-export",
     "allow-export-pdf",
     "allow-export-folder-pdf",
     "allow-save-image",
     "allow-import-image",
-    "allow-backlinks"
+    "allow-backlinks",
+    "allow-remove-roots",
+    "allow-get-window-state",
+    "allow-set-window-state"
   ]
 }

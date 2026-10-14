@@ -6,9 +6,12 @@ import { settings, updateSettings } from "../state/settings";
 import { countDocs } from "../state/tree";
 import { setSidebarTab, sidebarTab, type SidebarTab } from "../state/ui";
 import {
+  currentGitRoots,
   gitState,
+  locate,
   opened,
   refreshGit,
+  rootIds,
   rootInputs,
   roots,
   scanning,
@@ -26,7 +29,7 @@ const DOC_EXTENSIONS = new Set(["md", "markdown", "mdx"]);
 
 export function Sidebar() {
   const changedCount = createMemo(
-    () => Object.values(gitState.status).filter((s) => DOC_EXTENSIONS.has(extension(s.path))).length,
+    () => Object.values(gitState.status).filter((s) => DOC_EXTENSIONS.has(extension(s.path)) && locate(s.path)).length,
   );
   const tab = (id: SidebarTab, label: string, icon: () => any, badge?: () => number) => (
     <button
@@ -50,7 +53,7 @@ export function Sidebar() {
       <div class="sidebar-tabs" role="tablist" aria-label="Sidebar">
         {tab("files", "Files", () => <FolderIcon />)}
         {tab("search", "Search", () => <SearchIcon />)}
-        <Show when={gitState.roots.length > 0}>{tab("changes", "Changes", () => <GitIcon />, changedCount)}</Show>
+        <Show when={currentGitRoots().length > 0}>{tab("changes", "Changes", () => <GitIcon />, changedCount)}</Show>
       </div>
       <Switch>
         <Match when={sidebarTab() === "files"}>
@@ -157,7 +160,11 @@ function SearchPanel() {
       }
       setBusy(true);
       try {
-        const r = await ipc.searchText({ pattern: q, regex: regex(), caseSensitive: caseSensitive(), wholeWord: wholeWord() }, 200);
+        const r = await ipc.searchText(
+          { pattern: q, regex: regex(), caseSensitive: caseSensitive(), wholeWord: wholeWord() },
+          200,
+          rootIds(),
+        );
         if (mine === seq) {
           setResults(r);
           setError(null);
@@ -283,7 +290,7 @@ function ChangesPanel() {
   const [allFiles, setAllFiles] = createSignal(false);
   const changes = createMemo(() =>
     Object.values(gitState.status)
-      .filter((s) => allFiles() || DOC_EXTENSIONS.has(extension(s.path)))
+      .filter((s) => locate(s.path) && (allFiles() || DOC_EXTENSIONS.has(extension(s.path))))
       .sort((a, b) => a.path.localeCompare(b.path)),
   );
   const relOf = (path: string) => {
@@ -318,7 +325,7 @@ function ChangesPanel() {
           </button>
         </div>
       </div>
-      <For each={gitState.roots}>
+      <For each={currentGitRoots()}>
         {(g) => (
           <div class="repo-info">
             <GitIcon />

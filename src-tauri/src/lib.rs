@@ -4,9 +4,12 @@
 mod commands;
 mod error;
 mod events;
+pub mod integration;
 mod protocol;
 mod roots;
 mod state;
+#[cfg(windows)]
+pub mod win32;
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -85,7 +88,9 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::app::reveal_path,
             commands::roots::open_path,
             commands::roots::add_root,
-            commands::roots::remove_root,
+            commands::roots::remove_roots,
+            commands::roots::get_window_state,
+            commands::roots::set_window_state,
             commands::roots::rescan_root,
             commands::roots::current_roots,
             commands::roots::save_workspace,
@@ -108,6 +113,9 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::git::git_status,
             commands::git::git_history,
             commands::git::diff_document,
+            commands::integration::integration_status,
+            commands::integration::set_cli_on_path,
+            commands::integration::set_context_menu,
         ])
         .build(tauri::generate_context!())?;
 
@@ -133,12 +141,22 @@ fn forward_open(app: &tauri::AppHandle, path: PathBuf) {
     }
 }
 
+/// Resolves a command-line path against the caller's folder and cleans it
+/// up (`C:\a\\b`, `.`, `..`), so the UI sees one spelling per folder.
 fn absolutize(path: &Path, cwd: &Path) -> PathBuf {
-    if path.is_absolute() {
-        path.to_owned()
+    // Explorer passes a drive root as `"C:\"`, which arrives as `C:"`.
+    let path = match path.to_str() {
+        Some(s) if cfg!(windows) && s.ends_with('"') => {
+            PathBuf::from(format!("{}\\", s.trim_end_matches('"')))
+        }
+        _ => path.to_owned(),
+    };
+    let full = if path.is_absolute() {
+        path
     } else {
         cwd.join(path)
-    }
+    };
+    dunce::canonicalize(&full).unwrap_or(full)
 }
 
 #[cfg(test)]
@@ -162,5 +180,14 @@ mod tests {
         let cwd = std::env::current_dir().unwrap();
         assert_eq!(absolutize(Path::new("docs"), &cwd), cwd.join("docs"));
         assert_eq!(absolutize(&cwd, Path::new("ignored")), cwd);
+    }
+
+    #[test]
+    fn existing_paths_get_one_spelling() {
+        let cwd = dunce::canonicalize(std::env::current_dir().unwrap()).unwrap();
+        assert_eq!(absolutize(Path::new("."), &cwd), cwd);
+        assert_eq!(absolutize(Path::new("src/../src"), &cwd), cwd.join("src"));
+        #[cfg(windows)]
+        assert_eq!(absolutize(Path::new("C:\""), &cwd), PathBuf::from("C:\\"));
     }
 }

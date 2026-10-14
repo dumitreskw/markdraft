@@ -20,7 +20,6 @@ pub struct OpenRequest {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TreeBatch {
-    pub generation: u64,
     pub root_id: RootId,
     pub nodes: Vec<TreeNode>,
     /// True on the last batch of a scan.
@@ -31,7 +30,6 @@ pub struct TreeBatch {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FsChanged {
-    pub generation: u64,
     pub root_id: RootId,
     pub changes: Vec<Change>,
 }

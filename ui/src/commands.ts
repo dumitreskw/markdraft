@@ -6,7 +6,7 @@ import { command, formatTable, insertCodeBlock, insertLink, insertTable, setHead
 import * as ipc from "./ipc";
 import { dirName } from "./paths";
 import { closeDiff, diffRequest } from "./state/diff";
-import { activeDoc, activePath, closeTab, openDoc, reloadFromDisk, saveAll, saveDoc, setActivePath, tabs } from "./state/docs";
+import { activeDoc, activePath, closeTab, openDoc, reloadFromDisk, saveAll, saveDoc, tabs } from "./state/docs";
 import { effectiveTheme, settings, updateSettings } from "./state/settings";
 import {
   focusMode,
@@ -23,7 +23,16 @@ import {
   toast,
   viewMode,
 } from "./state/ui";
-import { addRootAction, gitStatusOf, opened, openPathAction, roots } from "./state/workspace";
+import {
+  addRootAction,
+  closeWorkspace,
+  currentTab,
+  cycleWorkspace,
+  gitStatusOf,
+  openPathAction,
+  roots,
+  workspaceTabs,
+} from "./state/workspace";
 
 export interface Command {
   id: string;
@@ -228,19 +237,31 @@ export const commands: Command[] = [
   { id: "settings", title: "Settings", category: "App", keys: "Mod+,", run: () => setModal({ kind: "settings" }) },
   { id: "about", title: "About MarkDraft", category: "App", run: () => setModal({ kind: "about" }) },
   {
-    id: "close-folder",
-    title: "Close Folder",
-    category: "File",
+    id: "close-workspace",
+    title: "Close Workspace Tab",
+    category: "Workspace",
+    keys: "Mod+Alt+W",
     when: hasRoots,
-    run: async () => {
-      const { closeAll } = await import("./state/docs");
-      const { persistSession, setOpened } = await import("./state/workspace");
-      await persistSession();
-      if (await closeAll()) {
-        setOpened(null);
-        setActivePath(null);
-      }
+    run: () => {
+      const tab = currentTab();
+      return tab ? closeWorkspace(tab.id) : undefined;
     },
+  },
+  {
+    id: "next-workspace",
+    title: "Next Workspace Tab",
+    category: "Workspace",
+    keys: "Ctrl+Alt+PageDown",
+    when: () => workspaceTabs().length > 1,
+    run: () => cycleWorkspace(1),
+  },
+  {
+    id: "prev-workspace",
+    title: "Previous Workspace Tab",
+    category: "Workspace",
+    keys: "Ctrl+Alt+PageUp",
+    when: () => workspaceTabs().length > 1,
+    run: () => cycleWorkspace(-1),
   },
 ];
 
@@ -300,4 +321,3 @@ export function handleGlobalKey(e: KeyboardEvent): boolean {
   return false;
 }
 
-export const isOpen = () => !!opened();

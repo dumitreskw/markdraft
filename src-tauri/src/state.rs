@@ -24,19 +24,18 @@ pub struct RootEntry {
     pub watcher: Option<RootWatcher>,
 }
 
-/// The workspace file backing the open roots, if any.
+/// An open workspace file and the roots it opened.
 #[derive(Debug, Clone)]
 pub struct OpenWorkspace {
     pub file: PathBuf,
     pub def: workspace::WorkspaceDef,
+    pub root_ids: Vec<RootId>,
 }
 
 #[derive(Default)]
 pub struct Roots {
-    /// Bumped on every open so events from older scans can be ignored.
-    pub generation: u64,
     pub list: Vec<RootEntry>,
-    pub workspace: Option<OpenWorkspace>,
+    pub workspaces: Vec<OpenWorkspace>,
     next_id: RootId,
 }
 
@@ -122,7 +121,7 @@ impl AppState {
         let resolved = resolve(path)?;
         let roots = self.roots_read();
         if roots.list.iter().any(|r| resolved.starts_with(&r.path))
-            || roots.workspace.as_ref().is_some_and(|w| w.file == resolved)
+            || roots.workspaces.iter().any(|w| w.file == resolved)
         {
             Ok(resolved)
         } else {

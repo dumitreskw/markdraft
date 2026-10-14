@@ -21,8 +21,13 @@ Files stay plain `.md` on disk — no database, no lock-in.
 **Read and write**
 - Read, Edit and Split views with scroll sync; tabs with per-tab undo.
 - CommonMark + GitHub Flavored Markdown: tables, task lists (click to tick),
-  footnotes, callouts (`> [!NOTE]`), KaTeX math, Mermaid diagrams, syntax
-  highlighting, wiki links (`[[Page]]`), front matter.
+  footnotes (with hover previews), callouts (`> [!NOTE]`), syntax highlighting
+  with copy buttons, `==highlights==`, emoji shortcodes (`:rocket:`).
+- Diagrams: **Mermaid** and **Graphviz** (```` ```dot ````), with copy/save as SVG.
+- Math: KaTeX for `$…$`, `$$…$$` and ```` ```math ```` blocks.
+- Notes-app conventions: wiki links (`[[Page]]`), Obsidian image embeds
+  (`![[image.png|300]]`), `[TOC]` / `[[_TOC_]]` markers, definition lists,
+  front matter shown as a properties card, backlinks, optional smart punctuation.
 - Autosave, conflict detection when a file changes on disk (compare, keep
   mine, or take the disk version), encodings and line endings preserved.
 - Create, rename (F2), duplicate, move (drag in the tree) and delete to trash.

@@ -67,6 +67,7 @@ pub enum SaveKind {
     Pdf,
     Html,
     Workspace,
+    Svg,
 }
 
 /// Shows a native save dialog. The chosen path is approved for writing
@@ -84,6 +85,7 @@ pub async fn pick_save_path(
             SaveKind::Pdf => ("PDF document", "pdf"),
             SaveKind::Html => ("Web page", "html"),
             SaveKind::Workspace => ("MarkDraft workspace", workspace::WORKSPACE_EXTENSION),
+            SaveKind::Svg => ("SVG image", "svg"),
         };
         Ok(dialog_app
             .dialog()

@@ -1,0 +1,38 @@
+---
+source: crates/md-core/tests/golden.rs
+expression: "(&doc.title, &doc.headings, doc.word_count, doc.has_math, doc.has_mermaid)"
+---
+(
+    Some(
+        "Integrations",
+    ),
+    [
+        Heading {
+            level: 1,
+            text: "Integrations",
+            id: "integrations",
+            line: 9,
+        },
+        Heading {
+            level: 2,
+            text: "Diagrams",
+            id: "diagrams",
+            line: 13,
+        },
+        Heading {
+            level: 2,
+            text: "Embeds and emoji",
+            id: "embeds-and-emoji",
+            line: 23,
+        },
+        Heading {
+            level: 2,
+            text: "Glossary",
+            id: "glossary",
+            line: 27,
+        },
+    ],
+    26,
+    true,
+    false,
+)

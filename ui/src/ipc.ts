@@ -15,7 +15,7 @@ export interface AppInfo {
 }
 
 export type PickKind = "folder" | "file" | "workspace";
-export type SaveKind = "pdf" | "html" | "workspace";
+export type SaveKind = "pdf" | "html" | "workspace" | "svg";
 
 export interface OpenRequest {
   path: string;
@@ -94,6 +94,8 @@ export interface RenderedDoc {
   wordCount: number;
   hasMath: boolean;
   hasMermaid: boolean;
+  hasGraphviz: boolean;
+  frontMatter: { key: string; value: string }[];
 }
 
 export interface QuickOpenItem {
@@ -155,8 +157,8 @@ export const saveWorkspace = (file: string, name: string) => invoke<OpenResult>(
 export const readFile = (path: string) => invoke<LoadedDoc>("read_file", { path });
 export const saveFile = (path: string, text: string, format: DocFormat, expectedModifiedMs: number | null) =>
   invoke<SaveOutcome>("save_file", { path, text, format, expectedModifiedMs });
-export const renderMarkdown = (text: string, path: string | null) =>
-  invoke<RenderedDoc>("render_markdown", { text, path });
+export const renderMarkdown = (text: string, path: string | null, smart = false) =>
+  invoke<RenderedDoc>("render_markdown", { text, path, smart });
 export const createEntry = (parent: string, name: string, isDir: boolean) =>
   invoke<string>("create_entry", { parent, name, isDir });
 export const renameEntry = (from: string, to: string) => invoke<string>("rename_entry", { from, to });
@@ -177,6 +179,7 @@ export interface ExportOptions {
   theme: "clean" | "academic" | "compact";
   paper: "A4" | "Letter";
   toc: boolean;
+  smart?: boolean;
 }
 
 /** Exports `text` (the document's current contents) to a PDF at `out`. */

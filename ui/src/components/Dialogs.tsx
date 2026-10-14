@@ -221,7 +221,7 @@ function ExportDialog(props: { path: string }) {
     if (!out) return;
     setBusy(true);
     try {
-      if (kind === "pdf") await exportPdf(props.path, out, { theme: theme(), paper: paper(), toc: toc() });
+      if (kind === "pdf") await exportPdf(props.path, out, { theme: theme(), paper: paper(), toc: toc(), smart: settings.smartPunctuation });
       else await exportHtml(props.path, out);
       setModal(null);
       toast(`Exported ${baseName(out)}`, "success", { label: "Show", run: () => void ipc.revealPath(out).catch(() => {}) });
@@ -363,6 +363,7 @@ function SettingsDialog() {
             ["sans", "Sans-serif"],
             ["serif", "Serif"],
           ])}
+          {check("smartPunctuation", "Smart punctuation", "curly quotes, dashes and … in preview and PDF")}
           {select("defaultView", "Default view", [
             ["read", "Read"],
             ["edit", "Edit"],

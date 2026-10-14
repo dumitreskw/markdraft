@@ -41,6 +41,9 @@ importers:
       '@codemirror/view':
         specifier: 6.43.14
         version: 6.43.14
+      '@hpcc-js/wasm-graphviz':
+        specifier: 1.29.2
+        version: 1.29.2
       '@lezer/highlight':
         specifier: 1.2.5
         version: 1.2.5
@@ -329,6 +332,9 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@hpcc-js/wasm-graphviz@1.29.2':
+    resolution: {integrity: sha512-AkArBAZERT5OxH52/+kvCHB07cZ6ZNd9GnOvjw+S880bR88D6i27XfK6xj4dBhUDxNA2QPPMdgEcky3x4TJ3KA==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -2055,6 +2061,8 @@ snapshots:
   '@csstools/css-tokenizer@4.0.2': {}
 
   '@exodus/bytes@1.16.0': {}
+
+  '@hpcc-js/wasm-graphviz@1.29.2': {}
 
   '@iconify/types@2.0.0': {}
 

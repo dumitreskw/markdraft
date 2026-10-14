@@ -264,14 +264,17 @@ is valid and reproducible.
 
 #heading(depth: 1)[Glossary]#label("md-0-glossary")
 
-Arena
-: A memory pool from which many small objects are allocated and freed together.
+#block(above: 0.9em, below: 0.4em, strong[Arena])
 
-Front matter
-: A block of metadata at the top of a document, delimited by #raw("---"); lines.
+#pad(left: 1.5em)[A memory pool from which many small objects are allocated and freed together.]
 
-World
-: Typst\'s interface to files, fonts and the current date.
+#block(above: 0.9em, below: 0.4em, strong[Front matter])
+
+#pad(left: 1.5em)[A block of metadata at the top of a document, delimited by #raw("---"); lines.]
+
+#block(above: 0.9em, below: 0.4em, strong[World])
+
+#pad(left: 1.5em)[Typst\'s interface to files, fonts and the current date.]
 
 #heading(depth: 1)[Appendix: keyboard shortcuts]#label("md-0-appendix-keyboard-shortcuts")
 

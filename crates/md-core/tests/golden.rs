@@ -28,6 +28,7 @@ fn rendered_html_matches_snapshots() {
                 p.to_string_lossy().replace('\\', "/")
             )
         })),
+        smart: false,
     };
     let fixtures = fixtures();
     assert!(!fixtures.is_empty());

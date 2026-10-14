@@ -40,7 +40,11 @@ pub async fn save_file(
 /// Renders Markdown for the preview. `path` (the document's location) is
 /// only used to resolve relative images.
 #[tauri::command]
-pub async fn render_markdown(text: String, path: Option<PathBuf>) -> Result<RenderedDoc, CmdError> {
+pub async fn render_markdown(
+    text: String,
+    path: Option<PathBuf>,
+    smart: Option<bool>,
+) -> Result<RenderedDoc, CmdError> {
     blocking(move || {
         let ctx = RenderContext {
             base_dir: path
@@ -48,6 +52,7 @@ pub async fn render_markdown(text: String, path: Option<PathBuf>) -> Result<Rend
                 .and_then(Path::parent)
                 .map(Path::to_path_buf),
             asset_url: Some(Arc::new(asset_url)),
+            smart: smart.unwrap_or(false),
         };
         Ok(md_core::render(&text, &ctx))
     })

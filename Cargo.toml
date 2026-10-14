@@ -31,7 +31,7 @@ serde_json = "1.0.154"
 toml = "0.9.8"
 
 # Core functionality
-comrak = { version = "0.56.0", default-features = false }
+comrak = { version = "0.56.0", default-features = false, features = ["shortcodes"] }
 ignore = "0.4.33"
 globset = "0.4.20"
 nucleo-matcher = "0.3.1"

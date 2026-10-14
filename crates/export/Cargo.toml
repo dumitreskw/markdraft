@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 comrak = { workspace = true, features = [] }
+md-core.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 typst = "=0.15.1"

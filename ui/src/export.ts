@@ -4,33 +4,55 @@ import * as ipc from "./ipc";
 import { stem } from "./paths";
 import { docs } from "./state/docs";
 import markdownCss from "./markdown.css?raw";
+import { renderDot } from "./preview/enhance";
 
 export interface PdfOptions {
   theme: "clean" | "academic" | "compact";
   paper: "A4" | "Letter";
   toc: boolean;
+  smart?: boolean;
 }
 
-/** Mermaid fences in document order (matches the exporter's indexing). */
-export function mermaidSources(markdown: string): string[] {
-  const out: string[] = [];
-  const re = /^(\s{0,3})(`{3,}|~{3,})\s*mermaid\b[^\n]*\n([\s\S]*?)^\1?\2[`~]*\s*$/gm;
+/** Diagram fences (mermaid, dot, graphviz) in document order — the same
+ *  order the exporter numbers them in. */
+export function diagramSources(markdown: string): { lang: string; source: string }[] {
+  const out: { lang: string; source: string }[] = [];
+  const re = /^(\s{0,3})(`{3,}|~{3,})\s*(mermaid|dot|graphviz)\b[^\n]*\n([\s\S]*?)^\1?\2[`~]*\s*$/gm;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(markdown))) out.push(m[3]);
+  while ((m = re.exec(markdown))) out.push({ lang: m[3], source: m[4] });
   return out;
 }
 
+/** Only the Mermaid sources. */
+export function mermaidSources(markdown: string): string[] {
+  return diagramSources(markdown)
+    .filter((d) => d.lang === "mermaid")
+    .map((d) => d.source);
+}
+
 async function renderDiagrams(markdown: string): Promise<Record<number, string>> {
-  const sources = mermaidSources(markdown);
+  const sources = diagramSources(markdown);
   if (!sources.length) return {};
-  const { default: mermaid } = await import("mermaid");
-  // Light theme for print, regardless of the app theme.
-  // Plain SVG text labels: the PDF renderer cannot draw HTML labels.
-  mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral", htmlLabels: false, flowchart: { htmlLabels: false } });
   const out: Record<number, string> = {};
-  for (const [i, src] of sources.entries()) {
+  let mermaid: (typeof import("mermaid"))["default"] | null = null;
+  for (const [i, d] of sources.entries()) {
     try {
-      out[i] = (await mermaid.render(`export-mermaid-${i}-${Date.now()}`, src)).svg;
+      if (d.lang === "mermaid") {
+        if (!mermaid) {
+          mermaid = (await import("mermaid")).default;
+          // Light theme for print; plain-text labels: the PDF renderer cannot draw HTML labels.
+          mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "strict",
+            theme: "neutral",
+            htmlLabels: false,
+            flowchart: { htmlLabels: false },
+          });
+        }
+        out[i] = (await mermaid.render(`export-diagram-${i}-${Date.now()}`, d.source)).svg;
+      } else {
+        out[i] = await renderDot(d.source);
+      }
     } catch {
       // The exporter falls back to showing the diagram source.
     }
@@ -58,7 +80,7 @@ function portableImages(root: HTMLElement) {
 export async function exportHtml(path: string, out: string) {
   const doc = docs[path];
   const text = doc?.text ?? (await ipc.readFile(path)).text;
-  const rendered = await ipc.renderMarkdown(text, path);
+  const rendered = await ipc.renderMarkdown(text, path, true);
   const holder = document.createElement("article");
   holder.className = "markdown-body";
   holder.innerHTML = rendered.html;
@@ -73,12 +95,13 @@ export async function exportHtml(path: string, out: string) {
       });
     }
   }
-  if (rendered.hasMermaid) {
+  if (rendered.hasMermaid || rendered.hasGraphviz) {
     const svgs = await renderDiagrams(text);
-    holder.querySelectorAll("pre > code.language-mermaid").forEach((code, i) => {
+    const fences = "pre > code.language-mermaid, pre > code.language-dot, pre > code.language-graphviz";
+    holder.querySelectorAll(fences).forEach((code, i) => {
       if (!svgs[i]) return;
       const div = document.createElement("div");
-      div.className = "mermaid-diagram";
+      div.className = "diagram";
       div.innerHTML = svgs[i];
       code.parentElement!.replaceWith(div);
     });

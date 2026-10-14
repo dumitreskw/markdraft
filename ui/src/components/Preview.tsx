@@ -1,4 +1,5 @@
-import { createEffect, on, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createSignal, For, on, onCleanup, onMount, Show } from "solid-js";
+import { decorate, footnoteHtml, renderGraphviz, renderMath, renderMermaid } from "../preview/enhance";
 import { toggleTaskAt } from "../editor/format";
 import { registerPane, scrolled } from "../editor/sync";
 import * as ipc from "../ipc";
@@ -13,10 +14,8 @@ interface PreviewProps {
   path: string;
 }
 
-const mermaidCache = new Map<string, string>();
 /** Preview scroll positions per document, kept across tab switches. */
 const scrollMemory = new Map<string, number>();
-let mermaidSeq = 0;
 
 export function Preview(props: PreviewProps) {
   let scroller!: HTMLDivElement;
@@ -75,56 +74,23 @@ export function Preview(props: PreviewProps) {
       box.disabled = !editable;
       box.tabIndex = editable ? 0 : -1;
     }
-    if (d.rendered.hasMath) await renderMath();
-    if (d.rendered.hasMermaid) await renderMermaid();
+    const theme = effectiveTheme();
+    if (d.rendered.hasMath) await renderMath(body);
+    if (d.rendered.hasMermaid) await renderMermaid(body, theme);
+    if (d.rendered.hasGraphviz) await renderGraphviz(body);
+    decorate(body, d.name);
     collectBlocks();
   };
 
-  const renderMath = async () => {
-    const nodes = body.querySelectorAll<HTMLElement>("[data-math-style]");
-    if (!nodes.length) return;
-    const [{ default: katex }] = await Promise.all([import("katex"), import("katex/dist/katex.min.css")]);
-    for (const el of nodes) {
-      const tex = el.textContent ?? "";
-      try {
-        katex.render(tex, el, {
-          displayMode: el.dataset.mathStyle === "display",
-          throwOnError: false,
-          output: "htmlAndMathml",
-          trust: false,
-        });
-      } catch {
-        el.classList.add("math-error");
-      }
-    }
-  };
-
-  const renderMermaid = async () => {
-    const codes = body.querySelectorAll<HTMLElement>("pre > code.language-mermaid");
-    if (!codes.length) return;
-    const { default: mermaid } = await import("mermaid");
-    const theme = effectiveTheme() === "dark" ? "dark" : "neutral";
-    mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme, fontFamily: "inherit" });
-    for (const code of codes) {
-      const source = code.textContent ?? "";
-      const key = theme + "\n" + source;
-      const pre = code.parentElement!;
-      const holder = document.createElement("div");
-      holder.className = "mermaid-diagram";
-      holder.dataset.sourcepos = pre.dataset.sourcepos ?? "";
-      try {
-        let svg = mermaidCache.get(key);
-        if (!svg) {
-          svg = (await mermaid.render(`mermaid-${++mermaidSeq}`, source)).svg;
-          mermaidCache.set(key, svg);
-        }
-        holder.innerHTML = svg;
-      } catch (e) {
-        holder.classList.add("mermaid-error");
-        holder.textContent = `Diagram error: ${e instanceof Error ? e.message : String(e)}`;
-      }
-      if (pre.isConnected) pre.replaceWith(holder);
-    }
+  // Footnote previews: hovering a reference shows the note in place.
+  const [note, setNote] = createSignal<{ html: string; x: number; y: number } | null>(null);
+  const onOver = (e: MouseEvent) => {
+    const ref = (e.target as HTMLElement).closest<HTMLAnchorElement>("a[data-footnote-ref], sup.footnote-ref > a");
+    if (!ref) return setNote(null);
+    const html = footnoteHtml(body, ref);
+    if (!html) return;
+    const r = ref.getBoundingClientRect();
+    setNote({ html, x: Math.min(r.left, window.innerWidth - 380), y: r.bottom + 6 });
   };
 
   // Re-render only when the HTML actually changed; keeps scroll position.
@@ -133,7 +99,7 @@ export function Preview(props: PreviewProps) {
       () => [doc()?.rendered?.html, effectiveTheme()] as const,
       ([html]) => {
         if (html === undefined) return;
-        if (html === renderedHtml && !body.querySelector(".mermaid-diagram")) return;
+        if (html === renderedHtml && !body.querySelector(".diagram")) return;
         const first = renderedHtml === "";
         renderedHtml = html;
         const top = first ? (scrollMemory.get(props.path) ?? 0) : scroller.scrollTop;
@@ -232,7 +198,23 @@ export function Preview(props: PreviewProps) {
   });
 
   return (
-    <div ref={scroller} class="preview-scroller" tabIndex={-1}>
+    <div ref={scroller} class="preview-scroller" tabIndex={-1} onMouseOver={onOver} onMouseLeave={() => setNote(null)}>
+      <Show when={doc()?.rendered?.frontMatter.filter((f) => f.key !== "title").length}>
+        <aside
+          class="front-matter"
+          classList={{ [`width-${settings.previewWidth}`]: true }}
+          aria-label="Document properties"
+        >
+          <For each={doc()!.rendered!.frontMatter.filter((f) => f.key !== "title")}>
+            {(f) => (
+              <div class="fm-row">
+                <span class="fm-key">{f.key}</span>
+                <span class="fm-value">{f.value}</span>
+              </div>
+            )}
+          </For>
+        </aside>
+      </Show>
       <article
         ref={body}
         class="markdown-body"
@@ -242,6 +224,9 @@ export function Preview(props: PreviewProps) {
         }}
         onClick={onClick}
       />
+      <Show when={note()}>
+        {(n) => <div class="footnote-preview" role="tooltip" style={{ left: `${n().x}px`, top: `${n().y}px` }} innerHTML={n().html} />}
+      </Show>
       <Show when={doc() && !doc()!.rendered}>
         <div class="preview-loading" aria-live="polite">
           Rendering…

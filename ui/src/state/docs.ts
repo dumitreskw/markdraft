@@ -196,7 +196,7 @@ export async function renderNow(path: string) {
   const seq = ++renderSeq;
   latestRender.set(path, seq);
   try {
-    const rendered = await ipc.renderMarkdown(doc.text, path);
+    const rendered = await ipc.renderMarkdown(doc.text, path, settings.smartPunctuation);
     // Ignore results that arrive after a newer render was requested.
     if (latestRender.get(path) === seq && docs[path]) setDocs(path, "rendered", rendered);
   } catch (e) {

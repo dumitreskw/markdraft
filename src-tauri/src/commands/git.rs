@@ -180,6 +180,7 @@ fn build_view(path: &Path, old_text: Option<String>, new_text: Option<String>) -
     let ctx = RenderContext {
         base_dir: path.parent().map(Path::to_path_buf),
         asset_url: Some(Arc::new(asset_url)),
+        smart: false,
     };
     let blocks_html = diff
         .blocks

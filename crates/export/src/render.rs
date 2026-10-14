@@ -38,7 +38,18 @@ pub(crate) fn comrak_options() -> Options<'static> {
     // Same as the preview: [[Page|label]] prints its label, ==text== highlights.
     opts.extension.wikilinks_title_after_pipe = true;
     opts.extension.highlight = true;
+    opts.extension.description_lists = true;
     opts
+}
+
+/// Fence languages drawn as diagrams when the UI supplies an SVG for them.
+pub(crate) const DIAGRAM_LANGS: &[&str] = &["mermaid", "dot", "graphviz"];
+
+/// Paragraphs (or HTML comments) that ask for a table of contents.
+const TOC_MARKERS: &[&str] = &["[toc]", "[[_toc_]]", "[[toc]]", "${toc}", "<!-- toc -->"];
+
+fn is_toc_marker(text: &str) -> bool {
+    TOC_MARKERS.contains(&text.trim().to_ascii_lowercase().as_str())
 }
 
 /// How LaTeX math is emitted.
@@ -53,6 +64,8 @@ pub(crate) enum MathMode {
 /// State shared by all documents of one export.
 pub(crate) struct Shared {
     pub math_mode: MathMode,
+    /// Curly quotes, dashes and ellipses.
+    pub smart: bool,
     /// Whether any converted math was emitted (the math helpers are only
     /// imported when needed).
     pub uses_math: bool,
@@ -74,6 +87,7 @@ impl Shared {
     pub fn new(math_mode: MathMode) -> Self {
         Self {
             math_mode,
+            smart: false,
             uses_math: false,
             assets: Vec::new(),
             images: HashMap::new(),
@@ -163,8 +177,11 @@ pub(crate) struct RenderedDoc {
 /// the export and keeps labels unique when several documents are combined.
 pub(crate) fn render_doc(shared: &mut Shared, input: &ExportInput, doc: usize) -> RenderedDoc {
     let arena = Arena::new();
-    let opts = comrak_options();
-    let root = parse_document(&arena, input.markdown, &opts);
+    let mut opts = comrak_options();
+    opts.parse.smart = shared.smart;
+    // Obsidian image embeds, the same way the preview reads them.
+    let markdown = md_core::rewrite_embeds(input.markdown);
+    let root = parse_document(&arena, &markdown, &opts);
 
     let fm = root
         .children()
@@ -220,7 +237,8 @@ struct Renderer<'a, 's, 'i> {
     promoted: Option<&'a AstNode<'a>>,
     /// Subtracted from heading levels so the top level in use becomes 1.
     level_shift: u8,
-    mermaid_index: usize,
+    /// Index of the next diagram fence (any of `DIAGRAM_LANGS`).
+    diagram_index: usize,
 }
 
 impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
@@ -268,7 +286,7 @@ impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
             } else {
                 min_level - 1
             },
-            mermaid_index: 0,
+            diagram_index: 0,
         }
     }
 
@@ -332,12 +350,24 @@ impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
             NodeValue::HtmlBlock(html) => self.html_block(&html.literal),
             NodeValue::ThematicBreak => "#md-rule()".to_owned(),
             NodeValue::Table(table) => self.table(node, &table.alignments),
+            NodeValue::DescriptionTerm => {
+                format!(
+                    "#block(above: 0.9em, below: 0.4em, strong[{}])",
+                    self.blocks(node)
+                )
+            }
+            NodeValue::DescriptionDetails => {
+                format!("#pad(left: 1.5em)[{}]", self.blocks(node))
+            }
             // Containers we do not style specially: render their children.
             _ => self.blocks(node),
         }
     }
 
     fn paragraph(&mut self, node: &'a AstNode<'a>) -> String {
+        if is_toc_marker(&node.collect_text()) {
+            return "#md-toc()".to_owned();
+        }
         // A paragraph holding a single image is a block image.
         let meaningful: Vec<_> = node
             .children()
@@ -407,9 +437,9 @@ impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
             .to_owned();
         let code = literal.strip_suffix('\n').unwrap_or(literal);
         match lang.to_ascii_lowercase().as_str() {
-            "mermaid" => {
-                let index = self.mermaid_index;
-                self.mermaid_index += 1;
+            l if DIAGRAM_LANGS.contains(&l) => {
+                let index = self.diagram_index;
+                self.diagram_index += 1;
                 if let Some(svg) = self.input.diagrams.get(&index)
                     && let Some(image) = validate_image(svg.as_bytes().to_vec())
                     && image.ext == "svg"
@@ -432,6 +462,9 @@ impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
     }
 
     fn html_block(&mut self, html: &str) -> String {
+        if is_toc_marker(html) {
+            return "#md-toc()".to_owned();
+        }
         let mut parts = Vec::new();
         for img in html_images(html) {
             parts.push(self.image(&img, true));

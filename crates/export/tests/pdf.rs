@@ -13,6 +13,7 @@ fn opts(theme: Theme) -> ExportOptions {
         theme,
         paper: Paper::A4,
         toc: true,
+        smart: false,
     }
 }
 
@@ -42,6 +43,7 @@ fn page_counts() {
             theme,
             paper: Paper::A4,
             toc,
+            smart: false,
         };
         export::layout_document(&input, &opts)
             .unwrap()

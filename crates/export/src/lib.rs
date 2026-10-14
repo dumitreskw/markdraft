@@ -71,6 +71,9 @@ pub struct ExportOptions {
     pub theme: Theme,
     pub paper: Paper,
     pub toc: bool,
+    /// Curly quotes, en/em dashes and ellipses.
+    #[serde(default)]
+    pub smart: bool,
 }
 
 impl FromStr for Theme {
@@ -134,9 +137,10 @@ pub struct ExportInput<'a> {
     pub base_dir: Option<&'a Path>,
     /// Overrides the title taken from front matter / first H1.
     pub title: Option<&'a str>,
-    /// Pre-rendered SVG for ```mermaid fences, keyed by 0-based index of the
-    /// mermaid fence in document order. Fences without an entry are shown as
-    /// code.
+    /// Pre-rendered SVG for diagram fences (```mermaid, ```dot, ```graphviz),
+    /// keyed by the 0-based index of the diagram fence in document order,
+    /// counting all three kinds together. Fences without an entry are shown
+    /// as code.
     pub diagrams: &'a HashMap<usize, String>,
 }
 
@@ -175,6 +179,7 @@ fn generate(
     math_mode: MathMode,
 ) -> Generated {
     let mut shared = Shared::new(math_mode);
+    shared.smart = opts.smart;
     let docs: Vec<RenderedDoc> = inputs
         .iter()
         .enumerate()
@@ -424,6 +429,54 @@ mod tests {
     }
 
     #[test]
+    fn markdown_integrations() {
+        let md = "# Doc
+
+[TOC]
+
+## A
+
+Term
+: Details here.
+
+![[pic.png|200]]
+
+```dot
+digraph { a -> b }
+```
+
+\"Quoted\" -- text...
+";
+        let mut diagrams = HashMap::new();
+        diagrams.insert(
+            0usize,
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\"/>".to_owned(),
+        );
+        let input = ExportInput {
+            diagrams: &diagrams,
+            ..ExportInput::new(md)
+        };
+        let opts = ExportOptions {
+            smart: true,
+            ..ExportOptions::default()
+        };
+        let typst = markdown_to_typst(&input, &opts).unwrap();
+        assert!(typst.contains("#md-toc()"), "{typst}");
+        assert!(
+            typst.contains("strong[") && typst.contains("#pad(left: 1.5em)"),
+            "{typst}"
+        );
+        assert!(
+            typst.contains("#md-diagram("),
+            "graphviz SVG embedded: {typst}"
+        );
+        assert!(typst.contains('“') && typst.contains('–'), "{typst}");
+        // The embed is resolved like an image (missing file → placeholder chip).
+        assert!(!typst.contains("![["), "{typst}");
+        assert!(markdown_to_pdf(&input, &opts).unwrap().starts_with(b"%PDF"));
+    }
+
+    #[test]
     fn wiki_links_and_highlights_print_as_text() {
         let typst = markdown_to_typst(
             &ExportInput::new(
@@ -443,6 +496,13 @@ mod tests {
     #[test]
     fn options_json_shape() {
         let json = serde_json::to_string(&ExportOptions::default()).unwrap();
-        assert_eq!(json, r#"{"theme":"clean","paper":"A4","toc":false}"#);
+        assert_eq!(
+            json,
+            r#"{"theme":"clean","paper":"A4","toc":false,"smart":false}"#
+        );
+        // Older callers that omit `smart` still deserialise.
+        let old: ExportOptions =
+            serde_json::from_str(r#"{"theme":"clean","paper":"A4","toc":true}"#).unwrap();
+        assert!(old.toc && !old.smart);
     }
 }

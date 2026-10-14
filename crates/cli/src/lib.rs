@@ -37,6 +37,9 @@ pub enum Command {
         /// Include a table of contents.
         #[arg(long)]
         toc: bool,
+        /// Typographic quotes, dashes and ellipses.
+        #[arg(long)]
+        smart: bool,
     },
 }
 
@@ -49,6 +52,7 @@ pub fn run_headless(cli: &Cli) -> anyhow::Result<bool> {
         theme,
         paper,
         toc,
+        smart,
     }) = &cli.command
     else {
         return Ok(false);
@@ -60,6 +64,7 @@ pub fn run_headless(cli: &Cli) -> anyhow::Result<bool> {
         theme: *theme,
         paper: *paper,
         toc: *toc,
+        smart: *smart,
     };
     let mut export_input = ExportInput::new(&markdown);
     // Relative image paths resolve against the document's folder.
@@ -108,6 +113,7 @@ mod tests {
                 theme: Theme::Academic,
                 paper: Paper::Letter,
                 toc: true,
+                smart: false,
             })
         );
     }

@@ -1,4 +1,6 @@
-import { createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from "solid-js";
+import { createEffect, createMemo, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from "solid-js";
+import { renderGraphviz, renderMath, renderMermaid } from "../preview/enhance";
+import { effectiveTheme } from "../state/settings";
 import type { BlockType, CollapsedEntry, DiffBlock, Hunk, RevArg, Segment, TableDiff } from "../ipc";
 import { baseName } from "../paths";
 import { docs, openDoc } from "../state/docs";
@@ -62,6 +64,21 @@ export function DiffPane() {
   });
 
   const stats = () => diffResult()?.diff.stats;
+
+  // Unchanged/added/removed blocks are rendered HTML: draw their math and
+  // diagrams like the preview does.
+  let docArticle: HTMLElement | undefined;
+  createEffect(
+    on([diffResult, entries, mode, effectiveTheme] as const, () => {
+      requestAnimationFrame(async () => {
+        const root = docArticle;
+        if (!root?.isConnected || mode() !== "document") return;
+        await renderMath(root);
+        await renderMermaid(root, effectiveTheme());
+        await renderGraphviz(root);
+      });
+    }),
+  );
   const req = () => diffRequest()!;
 
   const jump = (dir: 1 | -1) => {
@@ -197,7 +214,11 @@ export function DiffPane() {
             {(result) => (
               <Switch>
                 <Match when={mode() === "document"}>
-                  <article class="markdown-body diff-doc" classList={{ "whole-file": !result().oldExists || !result().newExists }}>
+                  <article
+                    ref={docArticle}
+                    class="markdown-body diff-doc"
+                    classList={{ "whole-file": !result().oldExists || !result().newExists }}
+                  >
                     <Show when={!result().oldExists || !result().newExists}>
                       <p class="diff-whole-note">
                         {!result().oldExists ? "This whole document is new in this version." : "This whole document was removed in this version."}

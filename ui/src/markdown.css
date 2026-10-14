@@ -91,7 +91,7 @@
 .markdown-body pre,
 .markdown-body details,
 .markdown-body .markdown-alert,
-.markdown-body .mermaid-diagram {
+.markdown-body .diagram {
   margin: 0 0 1.1em;
 }
 
@@ -287,18 +287,26 @@
   --alert: #c84238;
 }
 
-.markdown-body .mermaid-diagram {
+.markdown-body .diagram {
+  position: relative;
   display: flex;
   justify-content: center;
   overflow: auto;
+  margin: 0 0 1.1em;
+  padding: 8px 0;
 }
 
-.markdown-body .mermaid-diagram svg {
+.markdown-body .diagram svg {
   max-width: 100%;
   height: auto;
 }
 
-.markdown-body .mermaid-error,
+/* Graphviz draws black on white; invert it for dark mode. */
+:root[data-effective-theme="dark"] .markdown-body .graphviz-diagram svg {
+  filter: invert(0.88) hue-rotate(180deg);
+}
+
+.markdown-body .diagram-error,
 .markdown-body .math-error {
   padding: 8px 12px;
   border-radius: 6px;
@@ -529,4 +537,157 @@
   border-radius: 6px;
   color: var(--text-muted);
   font-size: 0.8em;
+}
+
+/* ------------------------------------------------ preview conveniences */
+
+.markdown-body .math-display {
+  margin: 0 0 1.1em;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.markdown-body .code-block {
+  position: relative;
+  margin: 0 0 1.1em;
+}
+
+.markdown-body .code-block > pre {
+  margin: 0;
+}
+
+.markdown-body .code-tools,
+.markdown-body .diagram-tools {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--duration, 120ms);
+}
+
+.markdown-body .code-block:hover .code-tools,
+.markdown-body .diagram:hover .diagram-tools,
+.markdown-body .code-tools:focus-within,
+.markdown-body .diagram-tools:focus-within {
+  opacity: 1;
+}
+
+.markdown-body .code-lang {
+  color: var(--text-faint);
+  font: 11px var(--font-mono);
+  text-transform: lowercase;
+}
+
+.markdown-body .tool-btn {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: 11.5px var(--font-ui);
+}
+
+.markdown-body .tool-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.markdown-body nav.toc {
+  margin: 0 0 1.4em;
+  padding: 0.6em 1em;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-pane) 60%, transparent);
+  font-size: 0.94em;
+}
+
+.markdown-body nav.toc::before {
+  content: "Contents";
+  display: block;
+  margin-bottom: 0.3em;
+  color: var(--text-muted);
+  font: 600 11px var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.markdown-body nav.toc ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.markdown-body nav.toc a {
+  text-decoration: none;
+}
+
+.markdown-body dl {
+  margin: 0 0 1.1em;
+}
+
+.markdown-body dt {
+  margin-top: 0.7em;
+  font-weight: 650;
+}
+
+.markdown-body dd {
+  margin: 0.15em 0 0 1.5em;
+  color: var(--text);
+}
+
+.front-matter {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  width: calc(100% - 80px);
+  max-width: 760px;
+  margin: 24px auto -8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.front-matter.width-narrow {
+  max-width: 640px;
+}
+
+.front-matter.width-wide {
+  max-width: 980px;
+}
+
+.fm-row {
+  display: contents;
+}
+
+.fm-key {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+.fm-value {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.footnote-preview {
+  position: fixed;
+  z-index: 40;
+  max-width: 360px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+.footnote-preview p {
+  margin: 0;
 }

@@ -24,6 +24,7 @@ fn typst_markup_with_options() {
         theme: Theme::Academic,
         paper: Paper::Letter,
         toc: true,
+        smart: false,
     };
     let src = export::markdown_to_typst(&ExportInput::new(&markdown), &opts).unwrap();
     insta::assert_snapshot!(src);
@@ -56,6 +57,7 @@ fn typst_markup_combined() {
     ];
     let opts = ExportOptions {
         toc: true,
+        smart: false,
         ..ExportOptions::default()
     };
     let src = export::combine_to_typst(&inputs, &opts, Some("Project Notes")).unwrap();

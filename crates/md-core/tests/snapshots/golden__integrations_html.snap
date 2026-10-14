@@ -1,0 +1,26 @@
+---
+source: crates/md-core/tests/golden.rs
+expression: doc.html
+---
+<h1 id="integrations" data-sourcepos="9:1-9:14">Integrations<a href="#integrations" aria-label="Link to heading 'Integrations'" data-heading-content="Integrations" class="anchor" rel="noopener noreferrer"></a></h1>
+<nav class="toc" aria-label="Contents">
+<ul>
+<li><a href="#diagrams" rel="noopener noreferrer">Diagrams</a></li>
+<li><a href="#embeds-and-emoji" rel="noopener noreferrer">Embeds and emoji</a></li>
+<li><a href="#glossary" rel="noopener noreferrer">Glossary</a></li>
+</ul>
+</nav>
+<h2 id="diagrams" data-sourcepos="13:1-13:11">Diagrams<a href="#diagrams" aria-label="Link to heading 'Diagrams'" data-heading-content="Diagrams" class="anchor" rel="noopener noreferrer"></a></h2>
+<pre data-sourcepos="15:1-17:3"><code class="language-dot">digraph G { draft -&gt; review -&gt; publish }
+</code></pre>
+<pre data-sourcepos="19:1-21:3"><code class="language-math" data-math-style="display">E = mc^2
+</code></pre>
+<h2 id="embeds-and-emoji" data-sourcepos="23:1-23:19">Embeds and emoji<a href="#embeds-and-emoji" aria-label="Link to heading 'Embeds and emoji'" data-heading-content="Embeds and emoji" class="anchor" rel="noopener noreferrer"></a></h2>
+<p data-sourcepos="25:1-25:91"><img src="mdasset://localhost//fixtures/images/chart.png" alt="images/chart.png" width="320"> Shipped 🚀 and 🎉</p>
+<h2 id="glossary" data-sourcepos="27:1-27:11">Glossary<a href="#glossary" aria-label="Link to heading 'Glossary'" data-heading-content="Glossary" class="anchor" rel="noopener noreferrer"></a></h2>
+<dl data-sourcepos="29:1-33:41">
+<dt data-sourcepos="29:1-29:1">Workspace</dt>
+<dd data-sourcepos="30:1-30:35">A set of folders opened together.</dd>
+<dt data-sourcepos="32:1-32:1">Front matter</dt>
+<dd data-sourcepos="33:1-33:41">YAML metadata at the top of a document.</dd>
+</dl>

@@ -22,6 +22,7 @@ export interface Settings {
   previewFont: "sans" | "serif";
   spellcheck: boolean;
   restoreSession: boolean;
+  smartPunctuation: boolean;
   defaultView: ViewMode;
 }
 
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: Settings = {
   previewFont: "sans",
   spellcheck: true,
   restoreSession: true,
+  smartPunctuation: false,
   defaultView: "split",
 };
 

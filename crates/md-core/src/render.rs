@@ -22,6 +22,8 @@ pub struct RenderContext {
     pub base_dir: Option<PathBuf>,
     /// Rewrites local image paths; without it, relative images are left as-is.
     pub asset_url: Option<AssetUrlFn>,
+    /// Curly quotes, en/em dashes and ellipses ("smart punctuation").
+    pub smart: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -45,6 +47,10 @@ pub struct RenderedDoc {
     /// The UI loads KaTeX / Mermaid only when a document needs them.
     pub has_math: bool,
     pub has_mermaid: bool,
+    /// Graphviz (`dot`) diagrams, rendered by the UI.
+    pub has_graphviz: bool,
+    /// Front matter entries, for the preview's metadata card.
+    pub front_matter: Vec<crate::FrontMatterField>,
 }
 
 /// Renders Markdown to sanitised HTML with `data-sourcepos` attributes.
@@ -53,7 +59,9 @@ pub fn render(markdown: &str, ctx: &RenderContext) -> RenderedDoc {
     opts.render.sourcepos = true;
     opts.render.r#unsafe = true; // raw HTML is allowed through, then sanitised below
     opts.render.tasklist_classes = true;
+    opts.parse.smart = ctx.smart;
 
+    let markdown = &*crate::extras::rewrite_embeds(markdown);
     let arena = Arena::new();
     let root = parse_document(&arena, markdown, &opts);
 
@@ -62,7 +70,9 @@ pub fn render(markdown: &str, ctx: &RenderContext) -> RenderedDoc {
     let mut word_count = 0;
     let mut has_math = false;
     let mut has_mermaid = false;
+    let mut has_graphviz = false;
     let mut front_matter_title = None;
+    let mut front_matter = Vec::new();
     for node in root.descendants() {
         let data = node.data.borrow();
         match &data.value {
@@ -77,15 +87,21 @@ pub fn render(markdown: &str, ctx: &RenderContext) -> RenderedDoc {
             }
             NodeValue::Text(t) => word_count += t.split_whitespace().count(),
             NodeValue::Math(_) => has_math = true,
-            NodeValue::CodeBlock(cb) => {
-                if cb.info.split_whitespace().next() == Some("mermaid") {
-                    has_mermaid = true;
-                }
+            NodeValue::CodeBlock(cb) => match cb.info.split_whitespace().next() {
+                Some("mermaid") => has_mermaid = true,
+                Some("dot" | "graphviz") => has_graphviz = true,
+                Some("math") => has_math = true,
+                _ => {}
+            },
+            NodeValue::FrontMatter(raw) => {
+                front_matter_title = crate::front_matter_title(raw);
+                front_matter = crate::front_matter_fields(raw);
             }
-            NodeValue::FrontMatter(raw) => front_matter_title = crate::front_matter_title(raw),
             _ => {}
         }
     }
+
+    crate::extras::expand_toc(root, &headings);
 
     let highlighter = Highlighter;
     let mut plugins = Plugins::default();
@@ -108,6 +124,8 @@ pub fn render(markdown: &str, ctx: &RenderContext) -> RenderedDoc {
         word_count,
         has_math,
         has_mermaid,
+        has_graphviz,
+        front_matter,
     }
 }
 
@@ -128,6 +146,7 @@ fn sanitize(html: &str, ctx: &RenderContext) -> String {
             "figcaption",
             "picture",
             "source",
+            "nav",
         ])
         .add_generic_attributes(&[
             "id",
@@ -266,6 +285,7 @@ mod tests {
             asset_url: Some(Arc::new(|p: &Path| {
                 format!("mdasset://localhost/{}", p.display())
             })),
+            smart: false,
         };
         let out = render("![a](img/my%20pic.png) ![b](https://x.org/a.png)", &ctx).html;
         let expected = Path::new("/docs").join("img/my pic.png");
@@ -274,6 +294,57 @@ mod tests {
             "{out}"
         );
         assert!(out.contains("https://x.org/a.png"));
+    }
+
+    #[test]
+    fn markdown_extras() {
+        let md = "---
+tags: [a, b]
+---
+
+# Doc
+
+[TOC]
+
+## One
+
+![[pic one.png|240]] :rocket:
+
+Term
+: Definition
+
+```dot
+digraph { a -> b }
+```
+
+```math
+x^2
+```
+";
+        let doc = render(md, &RenderContext::default());
+        assert!(
+            doc.html.contains(r##"<nav class="toc""##) && doc.html.contains(r##"href="#one""##),
+            "{}",
+            doc.html
+        );
+        assert!(
+            doc.html
+                .contains(r#"<img src="pic%20one.png" alt="pic one.png" width="240">"#),
+            "{}",
+            doc.html
+        );
+        assert!(doc.html.contains('🚀'));
+        assert!(doc.html.contains("<dl") && doc.html.contains("<dd"));
+        assert!(doc.has_graphviz && doc.has_math);
+        assert_eq!(doc.front_matter[0].value, "a, b");
+        let smart = render(
+            "\"Hi\" -- ok...",
+            &RenderContext {
+                smart: true,
+                ..Default::default()
+            },
+        );
+        assert!(smart.html.contains('“') && smart.html.contains('–') && smart.html.contains('…'));
     }
 
     #[test]

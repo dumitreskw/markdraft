@@ -3,12 +3,14 @@
 //! This crate is UI-free: it turns Markdown text into HTML and metadata
 //! (title, headings) that the app and the exporter consume.
 
+mod extras;
 mod highlight;
 mod render;
 
 use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Arena, Options, parse_document};
 
+pub use extras::{FrontMatterField, front_matter_fields, rewrite_embeds};
 pub use highlight::{HighlightTheme, highlight_css, warm_up};
 pub use render::{AssetUrlFn, Heading, RenderContext, RenderedDoc, render};
 
@@ -29,6 +31,9 @@ pub fn options() -> Options<'static> {
     opts.extension.math_dollars = true;
     opts.extension.wikilinks_title_after_pipe = true;
     opts.extension.highlight = true;
+    opts.extension.math_code = true;
+    opts.extension.description_lists = true;
+    opts.extension.shortcodes = true;
     opts.extension.header_id_prefix = Some(String::new());
     opts
 }

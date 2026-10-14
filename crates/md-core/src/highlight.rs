@@ -19,7 +19,7 @@ const CLASS_STYLE: ClassStyle = ClassStyle::SpacedPrefixed { prefix: "hl-" };
 const MAX_HIGHLIGHT_BYTES: usize = 64 * 1024;
 
 /// Fence languages rendered by the UI itself rather than highlighted.
-const PASSTHROUGH_LANGS: &[&str] = &["mermaid"];
+const PASSTHROUGH_LANGS: &[&str] = &["mermaid", "dot", "graphviz", "math"];
 
 fn syntaxes() -> &'static SyntaxSet {
     static SET: OnceLock<SyntaxSet> = OnceLock::new();

@@ -186,7 +186,7 @@ function SaveWorkspaceDialog() {
       }
     >
       <p class="muted">
-        A workspace remembers a set of folders ({roots().length} open now) and their export settings in a small
+        A workspace remembers a set of folders ({roots().length} open now) and their export settings in a small{" "}
         <code>.markdraft-workspace</code> file you can commit next to your docs.
       </p>
       <label class="field">

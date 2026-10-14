@@ -23,7 +23,6 @@ export interface Settings {
   spellcheck: boolean;
   restoreSession: boolean;
   defaultView: ViewMode;
-  remoteImages: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -42,7 +41,6 @@ export const DEFAULT_SETTINGS: Settings = {
   spellcheck: true,
   restoreSession: true,
   defaultView: "split",
-  remoteImages: true,
 };
 
 export const [settings, setSettingsStore] = createStore<Settings>({ ...DEFAULT_SETTINGS });

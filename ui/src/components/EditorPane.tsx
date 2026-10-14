@@ -44,7 +44,9 @@ async function pasteImages(path: string, files: File[]) {
     const ext = IMAGE_EXT[file.type] ?? "png";
     // Clipboard screenshots are all called "image.png"; give them a dated name.
     const generic = !file.name || /^image\.\w+$/i.test(file.name);
-    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    const d = new Date();
+    const two = (n: number) => String(n).padStart(2, "0");
+    const stamp = `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}-${two(d.getHours())}${two(d.getMinutes())}${two(d.getSeconds())}`;
     const name = generic ? `pasted-${stamp}.${ext}` : file.name;
     try {
       const link = await ipc.saveImage(path, name, new Uint8Array(await file.arrayBuffer()));

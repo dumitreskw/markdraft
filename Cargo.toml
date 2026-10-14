@@ -1,0 +1,60 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/markdraft/markdraft"
+
+[workspace.dependencies]
+# Internal crates
+md-core = { path = "crates/md-core" }
+fs-index = { path = "crates/fs-index" }
+workspace = { path = "crates/workspace" }
+search = { path = "crates/search" }
+export = { path = "crates/export" }
+cli = { path = "crates/cli" }
+
+# Errors and logging
+thiserror = "2.0.21"
+anyhow = "1.0.104"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+
+# Serialisation
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+toml = "0.9.8"
+
+# Core functionality
+comrak = { version = "0.56.0", default-features = false }
+ignore = "0.4.33"
+globset = "0.4.20"
+nucleo-matcher = "0.3.1"
+directories = "6.0.0"
+clap = { version = "4.6.7", features = ["derive"] }
+
+# Desktop shell
+tauri = "2.12.3"
+tauri-build = "2.7.2"
+tauri-plugin-single-instance = "2.5.3"
+tauri-plugin-dialog = "2.8.2"
+
+# Testing
+tempfile = "3.27.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

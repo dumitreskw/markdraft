@@ -1,0 +1,14 @@
+[package]
+name = "search"
+description = "Fuzzy file finding and full-text search for MarkDraft"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+nucleo-matcher.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

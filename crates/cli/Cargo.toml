@@ -1,0 +1,19 @@
+[package]
+name = "cli"
+description = "Command-line interface shared by the MarkDraft app and the headless binary"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "markdraft-cli"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+export.workspace = true
+
+[lints]
+workspace = true

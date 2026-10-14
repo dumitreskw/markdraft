@@ -1,0 +1,16 @@
+{
+  "name": "markdraft",
+  "private": true,
+  "packageManager": "pnpm@11.4.0",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "ui:build": "pnpm --filter markdraft-ui build",
+    "typecheck": "pnpm --filter markdraft-ui typecheck",
+    "test": "pnpm --filter markdraft-ui test"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.2"
+  }
+}

@@ -99,5 +99,10 @@ Design decisions: [DECISIONS.md](DECISIONS.md).
 
 ## Licence
 
-MIT OR Apache-2.0. Bundled fonts are under the SIL Open Font License and the
-GUST Font License; see `crates/export/fonts/`.
+MarkDraft is **free for personal and noncommercial use** under the
+[PolyForm Noncommercial License 1.0.0](LICENSE.md). Companies and paid work
+need a [commercial license](COMMERCIAL.md). Contributions: see
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+Bundled fonts are under the SIL Open Font License and the GUST Font License
+(see `crates/export/fonts/`); the vendored mitex Typst package is Apache-2.0.

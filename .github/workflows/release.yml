@@ -24,6 +24,10 @@ jobs:
             os: windows-latest
             args: ""
     runs-on: ${{ matrix.os }}
+    env:
+      # Signing turns on by itself once the secrets exist (see docs/SIGNING.md).
+      HAS_APPLE_SIGNING: ${{ secrets.APPLE_CERTIFICATE != '' }}
+      HAS_WINDOWS_SIGNING: ${{ secrets.AZURE_CLIENT_ID != '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -47,23 +51,49 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      # Produces MSI + NSIS on Windows, .app + DMG on macOS, AppImage + deb + rpm on Linux.
+      # ---- macOS: Developer ID signing + notarisation ----------------------
+      - name: Configure macOS signing
+        if: runner.os == 'macOS' && env.HAS_APPLE_SIGNING == 'true'
+        shell: bash
+        run: |
+          {
+            echo "APPLE_CERTIFICATE=${{ secrets.APPLE_CERTIFICATE }}"
+            echo "APPLE_CERTIFICATE_PASSWORD=${{ secrets.APPLE_CERTIFICATE_PASSWORD }}"
+            echo "APPLE_SIGNING_IDENTITY=${{ secrets.APPLE_SIGNING_IDENTITY }}"
+            echo "APPLE_ID=${{ secrets.APPLE_ID }}"
+            echo "APPLE_PASSWORD=${{ secrets.APPLE_PASSWORD }}"
+            echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}"
+          } >> "$GITHUB_ENV"
+
+      # ---- Windows: Azure Artifact Signing ---------------------------------
+      - name: Configure Windows signing
+        if: runner.os == 'Windows' && env.HAS_WINDOWS_SIGNING == 'true'
+        shell: bash
+        run: |
+          cargo install --locked artifact-signing-cli
+          cat > src-tauri/tauri.signing.json <<JSON
+          {
+            "bundle": {
+              "windows": {
+                "signCommand": "artifact-signing-cli -e ${{ vars.AZURE_SIGNING_ENDPOINT }} -a ${{ vars.AZURE_SIGNING_ACCOUNT }} -c ${{ vars.AZURE_SIGNING_PROFILE }} -d MarkDraft %1"
+              }
+            }
+          }
+          JSON
+          {
+            echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
+            echo "AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}"
+            echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"
+            echo "EXTRA_TAURI_ARGS=--config src-tauri/tauri.signing.json"
+          } >> "$GITHUB_ENV"
+
+      # MSI + NSIS on Windows, .app + DMG on macOS, AppImage + deb + rpm on Linux.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Code signing (configure these secrets before the first public release):
-          # APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
-          # APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID — macOS signing + notarisation.
-          # Windows: set bundle.windows.certificateThumbprint or signCommand in tauri.conf.json.
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: MarkDraft ${{ github.ref_name }}
           releaseDraft: true
           prerelease: true
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} ${{ env.EXTRA_TAURI_ARGS }}

@@ -68,6 +68,9 @@
         "description": "MarkDraft workspace",
         "role": "Editor"
       }
-    ]
+    ],
+    "license": "PolyForm-Noncommercial-1.0.0",
+    "licenseFile": "../LICENSE.md",
+    "copyright": "Copyright (c) 2026 dumitreskw. Free for personal use; commercial use requires a license."
   }
 }

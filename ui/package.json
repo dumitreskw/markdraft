@@ -32,5 +32,6 @@
     "vite": "8.3.4",
     "vite-plugin-solid": "2.11.14",
     "vitest": "5.0.4"
-  }
+  },
+  "license": "PolyForm-Noncommercial-1.0.0"
 }

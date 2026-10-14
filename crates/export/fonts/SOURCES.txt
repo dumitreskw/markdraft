@@ -1,0 +1,19 @@
+Fonts bundled into the MarkDraft PDF exporter (compiled in with include_bytes!).
+
+Inter 4.1 (SIL OFL 1.1, Inter-LICENSE.txt)
+  https://github.com/rsms/inter/releases/tag/v4.1  extras/ttf/Inter-{Regular,Italic,SemiBold,SemiBoldItalic}.ttf
+  Modified: TrueType hinting removed (fontTools subset --no-hinting, all glyphs,
+  features and names kept) to reduce size; hinting has no effect in PDF output.
+
+JetBrains Mono NL 2.304 (SIL OFL 1.1, JetBrainsMono-OFL.txt)
+  https://github.com/JetBrains/JetBrainsMono/releases/tag/v2.304  fonts/ttf/JetBrainsMonoNL-{Regular,Italic,Bold}.ttf
+  The "NL" (no ligatures) variant so code prints exactly as typed.
+  Modified: TrueType hinting removed as for Inter.
+
+Source Serif 4, version 4.005 (SIL OFL 1.1 with Reserved Font Name "Source", SourceSerif4-LICENSE.md)
+  https://github.com/adobe-fonts/source-serif/releases/tag/4.005R  OTF/SourceSerif4-{Regular,It,Bold,BoldIt}.otf
+  Unmodified.
+
+New Computer Modern Math Book (GUST Font License, NewCMMath-GUST-LICENSE.txt)
+  NewCMMath-Book.otf as shipped in the typst-assets 0.15.1 crate.
+  Unmodified.

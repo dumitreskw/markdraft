@@ -97,6 +97,8 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::docs::trash_entry,
             commands::docs::duplicate_entry,
             commands::docs::write_export,
+            commands::export::export_pdf,
+            commands::export::export_folder_pdf,
             commands::search::quick_open,
             commands::search::search_text,
             commands::git::git_info,

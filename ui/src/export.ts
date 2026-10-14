@@ -25,7 +25,8 @@ async function renderDiagrams(markdown: string): Promise<Record<number, string>>
   if (!sources.length) return {};
   const { default: mermaid } = await import("mermaid");
   // Light theme for print, regardless of the app theme.
-  mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
+  // Plain SVG text labels: the PDF renderer cannot draw HTML labels.
+  mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral", htmlLabels: false, flowchart: { htmlLabels: false } });
   const out: Record<number, string> = {};
   for (const [i, src] of sources.entries()) {
     try {

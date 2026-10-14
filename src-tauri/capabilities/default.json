@@ -41,6 +41,8 @@
     "allow-git-history",
     "allow-diff-document",
     "allow-search-text",
-    "allow-write-export"
+    "allow-write-export",
+    "allow-export-pdf",
+    "allow-export-folder-pdf"
   ]
 }

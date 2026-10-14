@@ -240,6 +240,18 @@ export function FileTree() {
     }
   };
 
+  const exportFolder = async (folder: string, name: string) => {
+    const out = await ipc.pickSavePath("pdf", `${name}.pdf`);
+    if (!out) return;
+    toast(`Exporting ${name}…`);
+    try {
+      const n = await ipc.exportFolderPdf(folder, out, { theme: "clean", paper: "A4", toc: true });
+      toast(`Exported ${n} documents to ${baseName(out)}`, "success", { label: "Show", run: () => void ipc.revealPath(out).catch(() => {}) });
+    } catch (e) {
+      toast(`Export failed: ${ipc.errorMessage(e)}`, "error");
+    }
+  };
+
   const showMenu = (row: Row, x: number, y: number) => {
     setSelectedKey(row.key);
     const abs = absOf(row);
@@ -262,6 +274,10 @@ export function FileTree() {
       items.push({ label: "Show history", run: () => openHistory(abs) });
       if (status && status.kind !== "untracked") items.push({ label: "Compare with last commit", run: () => openDiff(abs, { kind: "head" }, { kind: "workdir" }) });
       items.push({ label: "Export to PDF…", run: () => setModal({ kind: "export", path: abs }) });
+      items.push({ separator: true });
+    }
+    if (row.isDir) {
+      items.push({ label: "Export folder to PDF…", run: () => void exportFolder(abs, row.name) });
       items.push({ separator: true });
     }
     items.push({ label: "Reveal in file manager", run: () => void ipc.revealPath(abs).catch((e) => toast(ipc.errorMessage(e), "error")) });

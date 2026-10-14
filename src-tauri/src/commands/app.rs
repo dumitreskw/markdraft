@@ -219,7 +219,12 @@ pub async fn reveal_path(
     state: State<'_, AppState>,
     path: PathBuf,
 ) -> Result<(), CmdError> {
-    let path = state.allowed_path(&path)?;
+    // Exports saved outside the open folders can be revealed too.
+    let path = if state.is_approved_save(&path) {
+        path
+    } else {
+        state.allowed_path(&path)?
+    };
     app.opener()
         .reveal_item_in_dir(&path)
         .map_err(|e| CmdError::Io(e.to_string()))

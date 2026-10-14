@@ -29,6 +29,8 @@ const COMMANDS: &[&str] = &[
     "trash_entry",
     "duplicate_entry",
     "write_export",
+    "export_pdf",
+    "export_folder_pdf",
     "quick_open",
     "search_text",
     "git_info",

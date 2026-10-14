@@ -176,6 +176,10 @@ export interface ExportOptions {
 export const exportPdf = (path: string, text: string, out: string, options: ExportOptions, diagrams: Record<number, string>) =>
   invoke<void>("export_pdf", { path, text, out, options, diagrams });
 
+/** Exports every document in a folder into one PDF; returns the document count. */
+export const exportFolderPdf = (folder: string, out: string, options: ExportOptions) =>
+  invoke<number>("export_folder_pdf", { folder, out, options });
+
 /** Writes an exported file to a path chosen in the save dialog. */
 export const writeExport = (out: string, contents: string) => invoke<void>("write_export", { out, contents });
 

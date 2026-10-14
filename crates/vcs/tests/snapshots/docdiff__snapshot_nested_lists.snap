@@ -1,0 +1,25 @@
+---
+source: crates/vcs/tests/docdiff.rs
+expression: render(&d)
+---
+stats: +1 -0 ~4 moved 0 | words +11 -3 | identical false
+  h1 [1 -> 1]
+    # Onboarding checklist
+  paragraph [3 -> 3]
+    Before your first day:
+  li d0 [5 -> 5]
+    - Accounts
+~ li d1 [x] (was li d1 [ ]) [6 -> 6]
+    Create your email account
+  li d1 [ ] [7 -> 7]
+      - [ ] Join the chat workspace
++ li d1 [ ] [_ -> 8]
+      - [ ] Set up two-factor authentication
+  li d0 [8 -> 9]
+    - Hardware
+~ li d1 [ ] [9 -> 10]
+    Pick up your laptop {+and badge +}from IT
+~ paragraph [11 -> 12]
+    On your first day, meet your mentor and [-read-]{+skim+} the handbook.
+~ quote [13 -> 14]
+    Ask questions early. Nobody expects you to know everything in [-week one-]{+your first month+}.

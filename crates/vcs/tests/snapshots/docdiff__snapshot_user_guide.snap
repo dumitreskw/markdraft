@@ -1,0 +1,69 @@
+---
+source: crates/vcs/tests/docdiff.rs
+expression: render(&d)
+---
+stats: +2 -1 ~6 moved 1 | words +43 -13 | identical false
+~ frontmatter [1-4 -> 1-4]
+    ---
+    title: MarkDraft User Guide
+    [-version: 0.3
+    -]{+version: 0.4
+    +}---
+  h1 [6 -> 6]
+    # MarkDraft User Guide
+~ paragraph [8-9 -> 8-9]
+    MarkDraft is a [-quick-]{+fast+} Markdown reader and writer for people who keep their
+    notes, docs and drafts as plain text files.
+> paragraph [44 -> 11]
+    MarkDraft never uploads your files. Everything stays on your machine.
+~ h2 [11 -> 13]
+    [-Installing-]{+Installation+}
+  paragraph [13-14 -> 15-16]
+    Download the installer for your platform from the releases page and run it.
+    On macOS, drag the app into the Applications folder.
+~ code sh [16-19 -> 18-21]
+    markdraft --version
+    [-markdraft open ~/notes
+    -]{+markdraft open ~/Documents/notes+}
+  h2 [21 -> 23]
+    ## Opening a workspace
+  paragraph [23-24 -> 25-26]
+    A workspace is any folder on disk. Open one with **File → Open Folder** or
+    drop a folder on the window.
+  li d0 [26 -> 28]
+    - The sidebar lists every Markdown file in the folder.
+- li d0 [27 -> _]
+    - Hidden files are skipped.
+  li d0 [28 -> 29]
+    - Files larger than 10 MB open read-only.
+  h2 [30 -> 31]
+    ## Keyboard shortcuts
+~ table [32-36 -> 33-38]
+    | Action        | Windows / Linux | macOS   |
+    |---------------|-----------------|---------|
+    | Quick open    | Ctrl+P          | Cmd+P   |
+    | Toggle preview| Ctrl+Shift+V    | Cmd+Shift+V |
+    | Find in files | Ctrl+Shift+F    | Cmd+[-Shift+F |-]{+Option+F |
+    | Show changes  | Ctrl+Alt+D      | Cmd+Option+D |+}
+    | Unchanged: Action | Windows / Linux | macOS
+    | Unchanged: Quick open | Ctrl+P | Cmd+P
+    | Unchanged: Toggle preview | Ctrl+Shift+V | Cmd+Shift+V
+    | Modified: Find in files | Ctrl+Shift+F | Cmd+[-Shift-]{+Option+}+F
+    | Added: {+Show changes+} | {+Ctrl+Alt+D+} | {+Cmd+Option+D+}
++ h2 [_ -> 40]
+    ## Reviewing changes
++ paragraph [_ -> 42-43]
+    When a document lives in a Git repository, MarkDraft shows what changed
+    since the last commit, like tracked changes in a word processor.
+  h2 [38 -> 45]
+    ## Roadmap
+  li d0 [x] [40 -> 47]
+    - [x] Live preview
+~ li d0 [x] (was li d0 [ ]) [41 -> 48]
+    Export to PDF
+  li d0 [ ] [42 -> 49]
+    - [ ] Git integration
+< paragraph [44 -> 11]
+    MarkDraft never uploads your files. Everything stays on your machine.
+  quote [46 -> 51]
+    > **Note:** settings are stored per workspace in `.markdraft/`.

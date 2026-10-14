@@ -1,0 +1,31 @@
+---
+source: crates/vcs/tests/docdiff.rs
+expression: render(&d)
+---
+stats: +3 -0 ~1 moved 0 | words +42 -0 | identical false
+  h1 [1 -> 1]
+    # Release notes
++ h2 [_ -> 3]
+    ## 0.3.0
++ paragraph [_ -> 5-6]
+    Documents can now be compared with earlier versions from Git. Changes are
+    shown word by word, the way a reviewer would mark up a printed draft.
+  h2 [3 -> 8]
+    ## 0.2.0
+  paragraph [5-6 -> 10-11]
+    This release focuses on speed. Opening a folder with ten thousand files now takes
+    under a second, and search results stream in as they are found.
+  h3 [8 -> 13]
+    ### Fixes
+~ li d0 #1 [10 -> 15]
+    Fixed a crash when a file was renamed while {+it was +}open.
+  li d0 #2 [11 -> 16]
+    2. Fixed scrolling jumping to the top after saving.
+  li d0 #3 [12 -> 17]
+    3. The preview no longer flickers when typing quickly.
++ li d0 #4 [_ -> 18]
+    4. Emoji such as 👩‍💻 and CJK text like 日本語 now wrap correctly.
+  h2 [14 -> 20]
+    ## 0.1.0
+  paragraph [16 -> 22]
+    First public preview. Expect rough edges.

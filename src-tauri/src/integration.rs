@@ -456,7 +456,6 @@ mod platform {
                 enabled: false,
                 stale: false,
                 managed: false,
-                managed: false,
                 detail: "Adds a markdraft command for your terminal.".into(),
             };
         };
@@ -562,7 +561,6 @@ mod platform {
                 enabled: false,
                 stale: false,
                 managed: false,
-                managed: false,
                 detail:
                     "Finder has no per-app folder menu. Drag a folder onto MarkDraft in the Dock, \
                          or run markdraft . in Terminal."
@@ -574,7 +572,6 @@ mod platform {
                 supported: false,
                 enabled: false,
                 stale: false,
-                managed: false,
                 managed: false,
                 detail: "HOME is not set".into(),
             };

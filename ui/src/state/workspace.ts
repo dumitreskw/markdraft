@@ -23,6 +23,8 @@ import {
 export const [opened, setOpened] = createSignal<OpenResult | null>(null);
 const nodeMaps = new Map<number, Map<string, TreeNode>>();
 const [treeVersion, setTreeVersion] = createSignal(0);
+/** Changes whenever any root's nodes change. */
+export const treeVersionSignal = treeVersion;
 export const [scanning, setScanning] = createSignal<number[]>([]);
 export const [expanded, setExpanded] = createSignal<Set<string>>(new Set());
 export const [selectedKey, setSelectedKey] = createSignal<string | null>(null);

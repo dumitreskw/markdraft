@@ -6,50 +6,87 @@ The WebView renders and edits text; it never touches the file system.
 ```text
 markdraft/
 ├─ crates/
-│  ├─ md-core/     comrak → HTML (data-sourcepos), title, TOC
-│  ├─ fs-index/    discovery rules, tree model, watcher → incremental diffs
-│  ├─ workspace/   *.markdraft-workspace (TOML), session state, recents
-│  ├─ search/      fuzzy ranking (nucleo-matcher); full-text later
-│  ├─ export/      export options; AST → Typst → PDF (M3)
-│  └─ cli/         clap definitions, headless runner, markdraft-cli binary
-├─ src-tauri/      commands/, events.rs, state.rs, error.rs — glue only
-└─ ui/             SolidJS + TypeScript + Vite
+│  ├─ md-core/     comrak → sanitised HTML (data-sourcepos), syntect classes,
+│  │               title, headings, word count; golden HTML snapshots
+│  ├─ fs-index/    discovery rules, parallel scan, watcher → incremental diffs,
+│  │               document read/save (encoding, BOM, line endings, conflicts)
+│  ├─ workspace/   *.markdraft-workspace (TOML), app-data store: settings,
+│  │               recents, per-workspace session state
+│  ├─ search/      fuzzy ranking (nucleo-matcher), parallel full-text search
+│  ├─ vcs/         read-only Git (git2): status, history, file at revision;
+│  │               readable block/word document diff and line diff
+│  ├─ export/      Markdown → Typst → PDF in-process, 3 themes, bundled fonts,
+│  │               LaTeX via mitex, combined folder export
+│  └─ cli/         clap definitions, headless export, markdraft-cli binary
+├─ src-tauri/      commands/, roots.rs (scans + watchers), protocol.rs
+│                  (mdasset images), state.rs, events.rs — glue only
+└─ ui/             SolidJS + TypeScript + Vite; CodeMirror 6, KaTeX, Mermaid
 ```
+
+## Data flow
+
+1. `open_path` resolves a folder, a file (its folder, one level deep) or a
+   workspace file into roots. Each root is scanned on a background thread;
+   nodes stream to the UI as `tree://batch` events and into a per-root index
+   (path → title) used by quick open and search.
+2. After the scan a debounced watcher starts per root. Its diffs update the
+   index and reach the UI as `fs://changed`. Writes made by MarkDraft are
+   recorded (path + mtime) so their echo is ignored.
+3. The UI builds the tree from the flat node maps, renders documents through
+   `render_markdown`, and edits in CodeMirror. Saves pass the mtime read at
+   load; a mismatch is a conflict, never an overwrite.
+4. Every path a command receives is canonicalised and checked against the
+   open roots. Paths outside them are writable only when the user chose them
+   in a save dialog during this run.
 
 ## IPC contract
 
 Every command returns `Result<T, CmdError>`; `CmdError` serialises as
-`{ "kind": "io" | "internal", "message": string }`. Each command is listed in
-`src-tauri/build.rs` and granted in `src-tauri/capabilities/default.json`.
-TypeScript wrappers live in `ui/src/ipc.ts`.
+`{ "kind": "io" | "notFound" | "notAllowed" | "invalid" | "internal", "message": string }`.
+Each command is listed in `src-tauri/build.rs` (`COMMANDS`) and granted in
+`src-tauri/capabilities/default.json`. TypeScript wrappers: `ui/src/ipc.ts`.
 
 ### Commands
 
-| Milestone | Signature | Status |
-|---|---|---|
-| M0 | `app_info() -> AppInfo` | done |
-| M0 | `pick_path(kind: PickKind) -> Option<PathBuf>` | done |
-| M0 | `take_open_request() -> Option<OpenRequest>` | done |
-| M1 | `open_path(path: PathBuf) -> OpenResult` | planned |
-| M1 | `read_file(path: PathBuf) -> FileContent` | planned |
-| M1 | `render_markdown(text: String, base: PathBuf) -> RenderedDoc` | planned |
-| M1 | `set_tree_options(opts: TreeOptions) -> ()` | planned |
-| M2 | `save_file(path: PathBuf, text: String, expected_mtime: Option<i64>) -> SaveOutcome` | planned |
-| M2 | `create_entry(parent: PathBuf, name: String, is_dir: bool) -> PathBuf` | planned |
-| M2 | `rename_entry(from: PathBuf, to: PathBuf) -> ()` | planned |
-| M2 | `trash_entry(path: PathBuf) -> ()` | planned |
-| M2 | `quick_open(query: String, limit: u32) -> Vec<FileMatch>` | planned |
-| M3 | `open_workspace(file: PathBuf) -> OpenResult` | planned |
-| M3 | `save_workspace(file: PathBuf, def: WorkspaceDef) -> ()` | planned |
-| M3 | `list_recent() -> Vec<RecentEntry>` | planned |
-| M3 | `get_session(key: String) -> SessionState` / `set_session(key, session) -> ()` | planned |
-| M3 | `export_pdf(path: PathBuf, out: PathBuf, opts: ExportOptions) -> ExportReport` | planned |
+| Area | Signature |
+|---|---|
+| App | `app_info() -> AppInfo` |
+| App | `pick_path(kind: Folder\|File\|Workspace) -> Option<PathBuf>` |
+| App | `pick_save_path(kind: Pdf\|Html\|Workspace, suggested_name: String) -> Option<PathBuf>` (approves the path for one write) |
+| App | `take_open_request() -> Option<OpenRequest>` |
+| App | `get_settings() -> Value` / `set_settings(settings: Value)` |
+| App | `list_recents() -> Vec<RecentEntry>` / `remove_recent(path) -> Vec<RecentEntry>` |
+| App | `get_session(key) -> Option<Value>` / `set_session(key, session: Value)` |
+| App | `highlight_css() -> { light, dark }` |
+| App | `open_external(url)` (http, https, mailto only) / `reveal_path(path)` |
+| Roots | `open_path(path) -> OpenResult` |
+| Roots | `add_root(path) -> OpenResult` / `remove_root(root_id) -> OpenResult` / `rescan_root(root_id)` |
+| Roots | `current_roots() -> OpenResult` |
+| Roots | `save_workspace(file, name) -> OpenResult` |
+| Docs | `read_file(path) -> LoadedDoc` |
+| Docs | `save_file(path, text, format: DocFormat, expected_modified_ms: Option<i64>) -> SaveOutcome` |
+| Docs | `render_markdown(text, path: Option<PathBuf>) -> RenderedDoc` |
+| Docs | `create_entry(parent, name, is_dir) -> PathBuf` / `rename_entry(from, to) -> PathBuf` |
+| Docs | `trash_entry(path)` / `duplicate_entry(path) -> PathBuf` |
+| Search | `quick_open(query, limit) -> Vec<QuickOpenItem>` |
+| Search | `search_text(query: TextQuery, max_files) -> Vec<FileMatches>` |
+| Git | `git_info() -> Vec<GitRoot>` / `git_status(root) -> Vec<FileStatus>` |
+| Git | `git_history(path, limit) -> Vec<CommitInfo>` |
+| Git | `diff_document(path, old: RevArg, new: RevArg) -> DiffView` (RevArg: head, index, workdir, commit, parentOf, text) |
+| Export | `export_pdf(path, text, out, options: ExportOptions, diagrams: HashMap<usize, String>)` |
+| Export | `export_folder_pdf(folder, out, options) -> usize` |
+| Export | `write_export(out, contents)` |
 
 ### Events (Rust → UI)
 
-| Name | Payload | Status |
-|---|---|---|
-| `app://open-path` | `OpenRequest { path }` — second launch, file association | done |
-| `tree://batch` | `TreeBatch { root_id, nodes: Vec<TreeNode>, done }` | M1 |
-| `fs://changed` | `FsDiff { root_id, changes: Vec<Change> }` | M1 |
-| `export://progress` | `ExportProgress { stage, pct }` | M3 |
+| Name | Payload |
+|---|---|
+| `app://open-path` | `OpenRequest { path }` — second launch, file association, macOS open |
+| `tree://batch` | `TreeBatch { generation, root_id, nodes: Vec<TreeNode>, done, elapsed_ms }` |
+| `fs://changed` | `FsChanged { generation, root_id, changes: Vec<Change> }` (added, removed, renamed, modified, rescan) |
+
+### Custom protocol
+
+`mdasset` (`http://mdasset.localhost/<encoded path>` on Windows,
+`mdasset://localhost/<encoded path>` elsewhere) serves local images referenced
+by documents. Only image types are returned, with a restrictive CSP header.

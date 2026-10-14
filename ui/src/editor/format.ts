@@ -163,3 +163,81 @@ export const command =
     view.dispatch(view.state.update(spec, { scrollIntoView: true, userEvent: "input.format" }));
     return true;
   };
+
+const TABLE_LINE = /^\s*\|.*\|\s*$/;
+const SEPARATOR_CELL = /^\s*:?-{1,}:?\s*$/;
+
+function splitRow(line: string): string[] {
+  // Split on pipes that are not escaped; drop the outer empty cells.
+  const cells: string[] = [];
+  let cur = "";
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === "\\" && line[i + 1] === "|") {
+      cur += String.raw`\|`;
+      i++;
+    } else if (c === "|") {
+      cells.push(cur);
+      cur = "";
+    } else cur += c;
+  }
+  cells.push(cur);
+  return cells.slice(1, -1).map((c) => c.trim());
+}
+
+/** Display width, counting wide (CJK, emoji) characters as two columns. */
+function width(s: string): number {
+  let w = 0;
+  for (const ch of s) w += /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]|\p{Extended_Pictographic}/u.test(ch) ? 2 : 1;
+  return w;
+}
+
+/** Re-aligns a Markdown table given as lines; returns null if it is not a table. */
+export function alignTable(lines: string[]): string[] | null {
+  if (lines.length < 2 || !lines.every((l) => TABLE_LINE.test(l))) return null;
+  const rows = lines.map(splitRow);
+  const sep = rows[1];
+  if (!sep.every((c) => SEPARATOR_CELL.test(c))) return null;
+  const cols = Math.max(...rows.map((r) => r.length));
+  const aligns = Array.from({ length: cols }, (_, i) => {
+    const c = sep[i] ?? "---";
+    return c.startsWith(":") && c.endsWith(":") ? "center" : c.endsWith(":") ? "right" : c.startsWith(":") ? "left" : "none";
+  });
+  const widths = Array.from({ length: cols }, (_, i) =>
+    Math.max(3, ...rows.filter((_, r) => r !== 1).map((row) => width(row[i] ?? ""))),
+  );
+  const pad = (s: string, w: number, align: string) => {
+    const gap = w - width(s);
+    if (align === "right") return " ".repeat(gap) + s;
+    if (align === "center") return " ".repeat(Math.floor(gap / 2)) + s + " ".repeat(Math.ceil(gap / 2));
+    return s + " ".repeat(gap);
+  };
+  return rows.map((row, r) => {
+    const cells = Array.from({ length: cols }, (_, i) => {
+      if (r === 1) {
+        const a = aligns[i];
+        const dashes = "-".repeat(widths[i] - (a === "center" ? 2 : a === "none" ? 0 : 1));
+        return a === "center" ? `:${dashes}:` : a === "right" ? `${dashes}:` : a === "left" ? `:${dashes}` : dashes;
+      }
+      return pad(row[i] ?? "", widths[i], aligns[i]);
+    });
+    return `| ${cells.join(" | ")} |`;
+  });
+}
+
+/** Formats the table around the cursor. */
+export function formatTable(state: EditorState): TransactionSpec | null {
+  const head = state.selection.main.head;
+  let first = state.doc.lineAt(head).number;
+  if (!TABLE_LINE.test(state.doc.line(first).text)) return null;
+  let last = first;
+  while (first > 1 && TABLE_LINE.test(state.doc.line(first - 1).text)) first--;
+  while (last < state.doc.lines && TABLE_LINE.test(state.doc.line(last + 1).text)) last++;
+  const lines = [];
+  for (let n = first; n <= last; n++) lines.push(state.doc.line(n).text);
+  const aligned = alignTable(lines);
+  if (!aligned) return null;
+  const from = state.doc.line(first).from;
+  const to = state.doc.line(last).to;
+  return { changes: { from, to, insert: aligned.join("\n") } };
+}

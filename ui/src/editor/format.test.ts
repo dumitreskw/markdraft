@@ -1,6 +1,6 @@
 import { EditorSelection, EditorState, type TransactionSpec } from "@codemirror/state";
 import { describe, expect, it } from "vitest";
-import { insertLink, insertTable, minimalChange, setHeading, toggleList, toggleTaskAt, toggleWrap } from "./format";
+import { alignTable, insertLink, insertTable, minimalChange, setHeading, toggleList, toggleTaskAt, toggleWrap } from "./format";
 
 function state(doc: string, from: number, to = from) {
   return EditorState.create({ doc, selection: EditorSelection.single(from, to) });
@@ -82,5 +82,23 @@ describe("minimalChange", () => {
     expect(minimalChange("same", "same")).toEqual({ from: 4, to: 4, insert: "" });
     expect(minimalChange("", "new")).toEqual({ from: 0, to: 0, insert: "new" });
     expect(minimalChange("aaa", "aa")).toEqual({ from: 2, to: 3, insert: "" });
+  });
+});
+
+describe("alignTable", () => {
+  it("pads cells and keeps alignment markers", () => {
+    const out = alignTable(["| Name | Qty |", "|:--|--:|", "| apples | 3 |", "| kiwi | 12 |"]);
+    expect(out).toEqual(["| Name   | Qty |", "| :----- | --: |", "| apples |   3 |", "| kiwi   |  12 |"]);
+  });
+
+  it("fills missing cells, keeps escaped pipes, rejects non-tables", () => {
+    const escaped = String.raw`| x\|y |`;
+    expect(alignTable(["| a | b |", "|---|---|", escaped])).toEqual([
+      "| a    | b   |",
+      "| ---- | --- |",
+      String.raw`| x\|y |     |`,
+    ]);
+    expect(alignTable(["| a |", "| not a separator |"])).toBeNull();
+    expect(alignTable(["just text"])).toBeNull();
   });
 });

@@ -92,6 +92,32 @@ pub async fn search_text(
     .await
 }
 
+/// Documents in the open folders that link to `path`.
+#[tauri::command]
+pub async fn backlinks(
+    state: State<'_, AppState>,
+    path: PathBuf,
+) -> Result<Vec<search::Backlink>, CmdError> {
+    let path = state.allowed_path(&path)?;
+    let (files, title) = {
+        let roots = state.roots_read();
+        let mut title = None;
+        let mut files = Vec::new();
+        for root in &roots.list {
+            let index = root.index.read().unwrap_or_else(|p| p.into_inner());
+            for (rel, t) in index.iter() {
+                let abs = root.path.join(rel);
+                if abs == path {
+                    title.clone_from(t);
+                }
+                files.push(abs);
+            }
+        }
+        (files, title)
+    };
+    blocking(move || Ok(search::find_backlinks(&path, title.as_deref(), &files))).await
+}
+
 /// Score, matched display positions, matched title positions.
 type Best = (u32, Vec<u32>, Vec<u32>);
 

@@ -1,10 +1,13 @@
 // Tabs, the document toolbar, change banners, outline and status bar.
-import { createMemo, For, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js";
+import * as ipc from "../ipc";
 import { cursor } from "../state/cursor";
 import { revealLine, topLine } from "../editor/sync";
-import { activeDoc, activePath, closeTab, docs, keepMine, openDoc, reloadFromDisk, saveDoc, tabs } from "../state/docs";
+import { activeDoc, activePath, closeTab, docs, keepMine, openDoc, reloadFromDisk, reveal, saveDoc, tabs } from "../state/docs";
 import { setViewMode, viewMode, setModal, outlineVisible, setOutlineVisible } from "../state/ui";
-import { gitState, gitStatusOf, lastScanMs, locate } from "../state/workspace";
+import { allDocs, gitState, gitStatusOf, lastScanMs, locate, treeVersionSignal as rootsVersion } from "../state/workspace";
+
+const docTitle = (path: string) => allDocs().find((d) => d.path === path)?.title ?? null;
 import { diffRequest } from "../state/diff";
 import { openDiff, openHistory } from "./DiffView";
 import { CloseIcon, DiffIcon, DownloadIcon, EyeIcon, GitIcon, HistoryIcon, OutlineIcon, PenIcon, SplitIcon } from "./Icons";
@@ -213,6 +216,61 @@ function BannerContent(props: { doc: NonNullable<ReturnType<typeof activeDoc>> }
   );
 }
 
+/** Documents that link to the active one; refreshed on switch and save. */
+function Backlinks() {
+  const [links, setLinks] = createSignal<ipc.Backlink[]>([]);
+  let seq = 0;
+  createEffect(
+    on(
+      () => [activePath(), activeDoc()?.savedText, rootsVersion()] as const,
+      ([path]) => {
+        const mine = ++seq;
+        if (!path || !ipc.inTauri()) return setLinks([]);
+        // Debounced: saves of other files also land here through the tree.
+        setTimeout(async () => {
+          if (mine !== seq) return;
+          try {
+            const found = await ipc.backlinks(path);
+            if (mine === seq) setLinks(found);
+          } catch {
+            if (mine === seq) setLinks([]);
+          }
+        }, 400);
+      },
+    ),
+  );
+  const relOf = (path: string) => locate(path)?.rel ?? path;
+  return (
+    <section class="backlinks" aria-label="Linked from">
+      <div class="panel-header">
+        <h2>Linked from{links().length ? ` (${links().length})` : ""}</h2>
+      </div>
+      <Show when={links().length} fallback={<p class="muted empty-note">No other document links here.</p>}>
+        <ul class="backlink-list">
+          <For each={links()}>
+            {(l) => (
+              <li>
+                <button
+                  type="button"
+                  class="backlink"
+                  title={`${relOf(l.path)}:${l.line}`}
+                  onClick={async () => {
+                    await openDoc(l.path);
+                    reveal(l.path, { line: l.line });
+                  }}
+                >
+                  <span class="backlink-file">{docTitle(l.path) ?? relOf(l.path)}</span>
+                  <span class="backlink-text">{l.text}</span>
+                </button>
+              </li>
+            )}
+          </For>
+        </ul>
+      </Show>
+    </section>
+  );
+}
+
 export function Outline() {
   const headings = () => activeDoc()?.rendered?.headings ?? [];
   const minLevel = createMemo(() => Math.min(...headings().map((h) => h.level), 6));
@@ -252,6 +310,7 @@ export function Outline() {
           </For>
         </ol>
       </Show>
+      <Backlinks />
     </nav>
   );
 }

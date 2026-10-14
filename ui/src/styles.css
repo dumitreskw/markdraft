@@ -1076,6 +1076,7 @@ svg {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: auto;
 }
 
 .outline-list {
@@ -1112,6 +1113,54 @@ svg {
   border-left-color: var(--accent);
   color: var(--text);
   font-weight: 600;
+}
+
+.outline-list {
+  flex: 0 1 auto;
+}
+
+.backlinks {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.backlink-list {
+  margin: 0;
+  padding: 0 6px 16px;
+  list-style: none;
+}
+
+.backlink {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.backlink:hover {
+  background: var(--bg-hover);
+}
+
+.backlink-file {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backlink-text {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* --------------------------------------------------------- statusbar */

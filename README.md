@@ -2,14 +2,65 @@
 
 A fast, local-first Markdown reader and writer for Windows, macOS and Linux.
 Open a folder or a file, browse every Markdown document in a tree, edit with
-live preview, group folders into workspaces, and export to PDF.
+live preview, review changes the way a writer reads them, and export to PDF.
+Files stay plain `.md` on disk — no database, no lock-in.
 
-> Status: **M0 Foundations** — project layout, Tauri shell, CI, empty three-pane UI.
-> See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [DECISIONS.md](DECISIONS.md).
+## Features
+
+**Browse**
+- Open a folder, a single file (its sibling documents appear too) or a saved
+  multi-folder workspace — from the menu, by dropping it on the window, or
+  `markdraft <path>`.
+- File tree with document titles (or file names), natural sorting, filter,
+  keyboard navigation and type-ahead; live updates as files change on disk.
+- Respects `.gitignore`, `.ignore` and `.markdraftignore`; 10,000 files show
+  their first rows in about 7 ms.
+- Quick open (`Ctrl/⌘+P`) by name or title, full-text search with regex,
+  heading outline, recent folders and recently edited documents.
+
+**Read and write**
+- Read, Edit and Split views with scroll sync; tabs with per-tab undo.
+- CommonMark + GitHub Flavored Markdown: tables, task lists (click to tick),
+  footnotes, callouts (`> [!NOTE]`), KaTeX math, Mermaid diagrams, syntax
+  highlighting, wiki links (`[[Page]]`), front matter.
+- Autosave, conflict detection when a file changes on disk (compare, keep
+  mine, or take the disk version), encodings and line endings preserved.
+- Create, rename (F2), duplicate, move (drag in the tree) and delete to trash.
+
+**Review changes (Git)**
+- Status badges in the tree and a Changes panel listing edited documents.
+- A readable diff: paragraphs, list items and table rows marked added,
+  removed, edited or moved, with word-level changes inside edited text and
+  formatting kept — like tracked changes. A classic line view is one click away.
+- File history: pick any commit to see what it changed in the document.
+
+**Export**
+- PDF through Typst with three themes (Clean, Academic, Compact), A4 or US
+  Letter, optional table of contents; fonts are bundled so output is
+  identical on every OS. Math and Mermaid diagrams included.
+- Whole folders as one PDF with a cover and contents; self-contained HTML.
+- Headless: `markdraft-cli export notes.md -o notes.pdf --theme academic --toc`.
+
+## Keyboard shortcuts
+
+`Ctrl` on Windows/Linux, `⌘` on macOS. All commands: `Ctrl/⌘+Shift+P`.
+
+| Action | Keys |
+|---|---|
+| Go to document / command palette | `Ctrl+P` / `Ctrl+Shift+P` |
+| Open folder / file | `Ctrl+O` / `Ctrl+Shift+O` |
+| New document / save / close tab | `Ctrl+N` / `Ctrl+S` / `Ctrl+W` |
+| Read / Edit / Split | `Ctrl+1` / `Ctrl+2` / `Ctrl+3` |
+| Search in files / changed documents | `Ctrl+Shift+F` / `Ctrl+Shift+G` |
+| Compare with last commit / history | `Ctrl+Alt+D` / `Ctrl+Alt+H` |
+| Export to PDF | `Ctrl+Shift+E` |
+| Bold / italic / link | `Ctrl+B` / `Ctrl+I` / `Ctrl+K` |
+| Toggle sidebar / outline / focus mode | `Ctrl+\` / `Ctrl+Shift+\` / `F11` |
+| Settings | `Ctrl+,` |
 
 ## Develop
 
-Prerequisites: Rust (stable), Node 24, pnpm 11, and the
+Prerequisites: Rust 1.92+, Node 24, pnpm 11, and the
 [Tauri system dependencies](https://tauri.app/start/prerequisites/) for your OS
 (WebView2 on Windows, Xcode tools on macOS, WebKitGTK 4.1 on Linux).
 
@@ -29,19 +80,24 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
+Architecture and the IPC contract: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Design decisions: [DECISIONS.md](DECISIONS.md).
+
 ## Layout
 
 | Path | What |
 |---|---|
-| `crates/md-core` | Markdown parsing, rendering, title and TOC extraction |
-| `crates/fs-index` | Discovery rules, tree model, file watching |
-| `crates/workspace` | Workspace files, settings, session state |
-| `crates/search` | Fuzzy file finding, full-text search |
-| `crates/export` | PDF and HTML export |
+| `crates/md-core` | Markdown rendering, highlighting, title and heading extraction |
+| `crates/fs-index` | Discovery, file watching, document read/save |
+| `crates/workspace` | Workspace files, settings, recents, sessions |
+| `crates/search` | Quick open ranking and full-text search |
+| `crates/vcs` | Git status/history and the readable document diff |
+| `crates/export` | PDF export through Typst |
 | `crates/cli` | Command-line interface and `markdraft-cli` |
 | `src-tauri` | Tauri commands and events (no business logic) |
 | `ui` | SolidJS frontend |
 
 ## Licence
 
-MIT OR Apache-2.0
+MIT OR Apache-2.0. Bundled fonts are under the SIL Open Font License and the
+GUST Font License; see `crates/export/fonts/`.

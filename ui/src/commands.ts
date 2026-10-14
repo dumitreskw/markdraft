@@ -2,7 +2,7 @@
 // palette, menus and toolbar buttons.
 import { editorView, focusEditor } from "./components/EditorPane";
 import { openDiff, openHistory } from "./components/DiffView";
-import { command, insertCodeBlock, insertLink, insertTable, setHeading, toggleList, toggleWrap } from "./editor/format";
+import { command, formatTable, insertCodeBlock, insertLink, insertTable, setHeading, toggleList, toggleWrap } from "./editor/format";
 import * as ipc from "./ipc";
 import { dirName } from "./paths";
 import { closeDiff, diffRequest } from "./state/diff";
@@ -185,6 +185,7 @@ export const commands: Command[] = [
   { id: "numbers", title: "Numbered List", category: "Format", when: hasDoc, run: editorCmd((s) => toggleList(s, "ordered")) },
   { id: "tasks", title: "Task List", category: "Format", when: hasDoc, run: editorCmd((s) => toggleList(s, "task")) },
   { id: "table", title: "Insert Table", category: "Format", when: hasDoc, run: editorCmd(insertTable) },
+  { id: "format-table", title: "Format Table", category: "Format", keys: "Mod+Alt+F", when: hasDoc, run: editorCmd(formatTable) },
   { id: "code-block", title: "Insert Code Block", category: "Format", when: hasDoc, run: editorCmd(insertCodeBlock) },
 
   // Git

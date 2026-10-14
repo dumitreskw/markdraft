@@ -16,6 +16,8 @@ import {
 import { settings } from "../state/settings";
 import { viewMode } from "../state/ui";
 import { setCursor } from "../state/cursor";
+import * as ipc from "../ipc";
+import { toast } from "../state/ui";
 
 /** The one live editor view, for commands that act on it. */
 let currentView: EditorView | null = null;
@@ -25,6 +27,34 @@ export function focusEditor() {
   currentView?.focus();
 }
 
+/** Inserts text at the cursor of the live editor (replacing the selection). */
+export function insertAtCursor(text: string) {
+  const view = currentView;
+  if (!view || view.state.readOnly) return false;
+  view.dispatch(view.state.replaceSelection(text), { scrollIntoView: true, userEvent: "input" });
+  view.focus();
+  return true;
+}
+
+const IMAGE_EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/webp": "webp", "image/svg+xml": "svg" };
+
+/** Pasted images are saved next to the document and linked. */
+async function pasteImages(path: string, files: File[]) {
+  for (const file of files) {
+    const ext = IMAGE_EXT[file.type] ?? "png";
+    // Clipboard screenshots are all called "image.png"; give them a dated name.
+    const generic = !file.name || /^image\.\w+$/i.test(file.name);
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    const name = generic ? `pasted-${stamp}.${ext}` : file.name;
+    try {
+      const link = await ipc.saveImage(path, name, new Uint8Array(await file.arrayBuffer()));
+      insertAtCursor(`![](${link})`);
+    } catch (e) {
+      toast(`Could not insert the image: ${ipc.errorMessage(e)}`, "error");
+    }
+  }
+}
+
 export function EditorPane() {
   let host!: HTMLDivElement;
   const states = new Map<string, EditorState>();
@@ -32,13 +62,23 @@ export function EditorPane() {
   let view!: EditorView;
   let shownPath: string | null = null;
 
-  const extensionsFor = (path: string) =>
-    createExtensions(settings, docs[path]?.readonly ?? false, {
+  const extensionsFor = (path: string) => [
+    EditorView.domEventHandlers({
+      paste: (event) => {
+        const files = [...(event.clipboardData?.files ?? [])].filter((f) => f.type.startsWith("image/"));
+        if (!files.length || !shownPath) return false;
+        event.preventDefault();
+        void pasteImages(shownPath, files);
+        return true;
+      },
+    }),
+    ...createExtensions(settings, docs[path]?.readonly ?? false, {
       onChange: (text) => {
         if (shownPath) setText(shownPath, text);
       },
       onCursor: (line, col, selected) => setCursor({ line, col, selected }),
-    });
+    }),
+  ];
 
   const stateFor = (path: string) => {
     let state = states.get(path);

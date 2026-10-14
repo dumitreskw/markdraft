@@ -1,7 +1,9 @@
 //! Fuzzy file finding for quick open, and full-text search.
 
+mod links;
 mod text;
 
+pub use links::{Backlink, find_backlinks};
 pub use text::{FileMatches, LineMatch, SearchError, TextQuery, search_files};
 
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};

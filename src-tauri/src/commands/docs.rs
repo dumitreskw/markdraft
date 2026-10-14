@@ -189,6 +189,113 @@ pub async fn write_export(
     .await
 }
 
+/// Largest image accepted by paste or drop.
+const MAX_IMAGE_BYTES: usize = 25 * 1024 * 1024;
+
+/// Saves pasted image bytes next to a document, in an `assets` folder, and
+/// returns the relative link to insert. The raw request body carries the
+/// bytes; the `x-doc` and `x-name` headers (percent-encoded) say where.
+#[tauri::command]
+pub async fn save_image(
+    state: State<'_, AppState>,
+    request: tauri::ipc::Request<'_>,
+) -> Result<String, CmdError> {
+    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+        return Err(CmdError::Invalid("expected image bytes".into()));
+    };
+    let header = |name: &str| -> Result<String, CmdError> {
+        let raw = request
+            .headers()
+            .get(name)
+            .and_then(|v| v.to_str().ok())
+            .ok_or_else(|| CmdError::Invalid(format!("missing {name}")))?;
+        Ok(percent_encoding::percent_decode_str(raw)
+            .decode_utf8_lossy()
+            .into_owned())
+    };
+    let doc = state.allowed_path(Path::new(&header("x-doc")?))?;
+    let name = header("x-name")?;
+    let bytes = bytes.clone();
+    blocking(move || store_image(&doc, &name, &bytes)).await
+}
+
+/// Copies an image file (dropped from the file manager) next to a document.
+#[tauri::command]
+pub async fn import_image(
+    state: State<'_, AppState>,
+    doc: PathBuf,
+    source: PathBuf,
+) -> Result<String, CmdError> {
+    let doc = state.allowed_path(&doc)?;
+    blocking(move || {
+        if crate::protocol::mime_for(&source).is_none() {
+            return Err(CmdError::Invalid("only images can be inserted".into()));
+        }
+        let bytes = std::fs::read(&source)?;
+        let name = source
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .into_owned();
+        store_image(&doc, &name, &bytes)
+    })
+    .await
+}
+
+/// Writes `bytes` as `<doc folder>/assets/<name>` (made unique) and returns
+/// the Markdown-ready relative link.
+fn store_image(doc: &Path, name: &str, bytes: &[u8]) -> Result<String, CmdError> {
+    if bytes.len() > MAX_IMAGE_BYTES {
+        return Err(CmdError::Invalid(
+            "images larger than 25 MB are not inserted".into(),
+        ));
+    }
+    let path = Path::new(name);
+    if crate::protocol::mime_for(path).is_none() {
+        return Err(CmdError::Invalid(format!(
+            "{name} is not a supported image type"
+        )));
+    }
+    let ext = path
+        .extension()
+        .map(|e| e.to_string_lossy().to_ascii_lowercase())
+        .unwrap_or_default();
+    let stem = slug(&path.file_stem().unwrap_or_default().to_string_lossy());
+    let dir = doc
+        .parent()
+        .ok_or_else(|| CmdError::Invalid("the document has no folder".into()))?
+        .join("assets");
+    std::fs::create_dir_all(&dir)?;
+    let target = (1..10_000)
+        .map(|i| {
+            let file = if i == 1 {
+                format!("{stem}.{ext}")
+            } else {
+                format!("{stem}-{i}.{ext}")
+            };
+            dir.join(file)
+        })
+        .find(|p| !p.exists())
+        .ok_or_else(|| CmdError::Invalid("too many images with this name".into()))?;
+    std::fs::write(&target, bytes)?;
+    let file = target.file_name().unwrap_or_default().to_string_lossy();
+    Ok(format!("assets/{}", file.replace(' ', "%20")))
+}
+
+/// A file-name-friendly version of `s`: lowercase letters, digits and dashes.
+fn slug(s: &str) -> String {
+    let mut out = String::new();
+    for c in s.chars() {
+        if c.is_alphanumeric() {
+            out.extend(c.to_lowercase());
+        } else if !out.ends_with('-') && !out.is_empty() {
+            out.push('-');
+        }
+    }
+    let out = out.trim_end_matches('-').to_owned();
+    if out.is_empty() { "image".into() } else { out }
+}
+
 /// Checks a single file or folder name typed by the user.
 fn valid_name(name: &str) -> Result<&str, CmdError> {
     const RESERVED: &[&str] = &[
@@ -221,6 +328,27 @@ fn valid_name(name: &str) -> Result<&str, CmdError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn images_are_stored_uniquely_next_to_the_document() {
+        let dir = tempfile::tempdir().unwrap();
+        let doc = dir.path().join("note.md");
+        std::fs::write(&doc, "").unwrap();
+        assert_eq!(
+            store_image(&doc, "Screen Shot 1.PNG", b"x").unwrap(),
+            "assets/screen-shot-1.png"
+        );
+        assert_eq!(
+            store_image(&doc, "Screen Shot 1.PNG", b"y").unwrap(),
+            "assets/screen-shot-1-2.png"
+        );
+        assert_eq!(
+            std::fs::read(dir.path().join("assets/screen-shot-1-2.png")).unwrap(),
+            b"y"
+        );
+        assert!(store_image(&doc, "evil.exe", b"x").is_err());
+        assert_eq!(slug("  ---  "), "image");
+    }
 
     #[test]
     fn names_are_validated_for_every_os() {

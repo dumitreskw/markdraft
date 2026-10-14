@@ -162,6 +162,13 @@ export const createEntry = (parent: string, name: string, isDir: boolean) =>
 export const renameEntry = (from: string, to: string) => invoke<string>("rename_entry", { from, to });
 export const trashEntry = (path: string) => invoke<void>("trash_entry", { path });
 export const duplicateEntry = (path: string) => invoke<string>("duplicate_entry", { path });
+/** Saves image bytes into an `assets` folder next to `doc`; returns the link. */
+export const saveImage = (doc: string, name: string, bytes: Uint8Array) =>
+  invoke<string>("save_image", bytes, {
+    headers: { "x-doc": encodeURIComponent(doc), "x-name": encodeURIComponent(name) },
+  });
+/** Copies an image file into an `assets` folder next to `doc`; returns the link. */
+export const importImage = (doc: string, source: string) => invoke<string>("import_image", { doc, source });
 export const quickOpen = (query: string, limit: number) => invoke<QuickOpenItem[]>("quick_open", { query, limit });
 
 // ----------------------------------------------------------------- export
@@ -204,6 +211,14 @@ export interface FileMatches {
   matches: LineMatch[];
   total: number;
 }
+
+export interface Backlink {
+  path: string;
+  line: number;
+  text: string;
+}
+
+export const backlinks = (path: string) => invoke<Backlink[]>("backlinks", { path });
 
 export const searchText = (query: TextQuery, maxFiles: number) =>
   invoke<FileMatches[]>("search_text", { query, maxFiles });

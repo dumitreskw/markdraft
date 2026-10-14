@@ -5,7 +5,7 @@ import { handleGlobalKey } from "./commands";
 import { ContextMenuHost } from "./components/ContextMenu";
 import { ModalHost, Toasts } from "./components/Dialogs";
 import { DiffPane } from "./components/DiffView";
-import { EditorPane } from "./components/EditorPane";
+import { EditorPane, insertAtCursor } from "./components/EditorPane";
 import { Preview } from "./components/Preview";
 import { Sidebar } from "./components/Sidebar";
 import { Splitter } from "./components/Splitter";
@@ -23,6 +23,7 @@ import {
   setOutlineWidth,
   setSplitRatio,
   setTreeWidth,
+  setViewMode,
   sidebarVisible,
   splitRatio,
   toast,
@@ -101,8 +102,23 @@ export function App() {
         // Dropping folders or files onto the window opens them (Shift adds a folder).
         getCurrentWebview().onDragDropEvent((event) => {
           if (event.payload.type !== "drop" || !event.payload.paths.length) return;
-          const [first] = event.payload.paths;
-          if (opened() && dropAdds) void addRootAction(first);
+          const paths = event.payload.paths;
+          const [first] = paths;
+          const doc = activePath();
+          // Images dropped on an open document are inserted, not opened.
+          if (doc && /\.(png|jpe?g|gif|webp|svg|avif|bmp)$/i.test(first)) {
+            void (async () => {
+              for (const source of paths) {
+                try {
+                  const link = await ipc.importImage(doc, source);
+                  if (viewMode() === "read") setViewMode("split");
+                  insertAtCursor(`![](${link})\n`);
+                } catch (e) {
+                  toast(ipc.errorMessage(e), "error");
+                }
+              }
+            })();
+          } else if (opened() && dropAdds) void addRootAction(first);
           else void openPathAction(first);
         }),
         // Ask before closing with unsaved work.

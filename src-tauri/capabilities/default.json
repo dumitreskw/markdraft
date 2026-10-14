@@ -43,6 +43,9 @@
     "allow-search-text",
     "allow-write-export",
     "allow-export-pdf",
-    "allow-export-folder-pdf"
+    "allow-export-folder-pdf",
+    "allow-save-image",
+    "allow-import-image",
+    "allow-backlinks"
   ]
 }

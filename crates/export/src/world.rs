@@ -29,6 +29,8 @@ static FONT_FILES: &[&[u8]] = &[
     include_bytes!("../fonts/JetBrainsMonoNL-Italic.ttf"),
     include_bytes!("../fonts/JetBrainsMonoNL-Bold.ttf"),
     include_bytes!("../fonts/NewCMMath-Book.otf"),
+    // Fallback for emoji (Typst falls back to any bundled font with the glyph).
+    include_bytes!("../fonts/NotoEmoji-Regular.ttf"),
 ];
 
 /// Typst sources bundled with the exporter, by virtual path.

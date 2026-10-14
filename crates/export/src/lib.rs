@@ -477,6 +477,21 @@ digraph { a -> b }
     }
 
     #[test]
+    fn emoji_have_a_font() {
+        let input = ExportInput::new(
+            "Shipped :rocket: 🎉 ✅
+",
+        );
+        let typst = markdown_to_typst(&input, &ExportOptions::default()).unwrap();
+        assert!(typst.contains('🚀'), "{typst}");
+        let warnings = debug_compile_typeset(&input, &ExportOptions::default()).unwrap();
+        assert!(
+            warnings.iter().all(|w| !w.contains("glyph")),
+            "missing glyphs: {warnings:?}"
+        );
+    }
+
+    #[test]
     fn wiki_links_and_highlights_print_as_text() {
         let typst = markdown_to_typst(
             &ExportInput::new(

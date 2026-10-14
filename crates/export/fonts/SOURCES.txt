@@ -17,3 +17,8 @@ Source Serif 4, version 4.005 (SIL OFL 1.1 with Reserved Font Name "Source", Sou
 New Computer Modern Math Book (GUST Font License, NewCMMath-GUST-LICENSE.txt)
   NewCMMath-Book.otf as shipped in the typst-assets 0.15.1 crate.
   Unmodified.
+
+Noto Emoji (SIL OFL 1.1, NotoEmoji-OFL.txt)
+  https://github.com/google/fonts/tree/main/ofl/notoemoji  NotoEmoji[wght].ttf
+  Modified: static Regular instance (fontTools varLib.instancer wght=400) to
+  reduce size. Monochrome outlines, so emoji print in the text colour.

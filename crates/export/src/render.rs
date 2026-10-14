@@ -39,6 +39,8 @@ pub(crate) fn comrak_options() -> Options<'static> {
     opts.extension.wikilinks_title_after_pipe = true;
     opts.extension.highlight = true;
     opts.extension.description_lists = true;
+    // :rocket: shortcodes print with the bundled emoji font.
+    opts.extension.shortcodes = true;
     opts
 }
 
@@ -558,6 +560,7 @@ impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
                 }
             }
             NodeValue::Raw(text) => out.push_str(&escape_text(&text)),
+            NodeValue::ShortCode(code) => out.push_str(&escape_text(&code.emoji)),
             _ => {
                 for child in node.children() {
                     self.inline(child, out);

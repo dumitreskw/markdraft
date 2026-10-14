@@ -9,6 +9,7 @@ fn bundled_font_families() {
             "Inter",
             "JetBrains Mono NL",
             "New Computer Modern Math",
+            "Noto Emoji",
             "Source Serif 4",
         ]
     );

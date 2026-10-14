@@ -169,6 +169,26 @@ pub async fn duplicate_entry(
     .await
 }
 
+/// Writes an exported document (for example HTML) to a path the user picked
+/// in the save dialog.
+#[tauri::command]
+pub async fn write_export(
+    state: State<'_, AppState>,
+    out: PathBuf,
+    contents: String,
+) -> Result<(), CmdError> {
+    if !state.is_approved_save(&out) {
+        return Err(CmdError::NotAllowed(
+            "choose where to save the export first".into(),
+        ));
+    }
+    blocking(move || {
+        std::fs::write(&out, contents)?;
+        Ok(())
+    })
+    .await
+}
+
 /// Checks a single file or folder name typed by the user.
 fn valid_name(name: &str) -> Result<&str, CmdError> {
     const RESERVED: &[&str] = &[

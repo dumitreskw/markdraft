@@ -28,6 +28,7 @@ const COMMANDS: &[&str] = &[
     "rename_entry",
     "trash_entry",
     "duplicate_entry",
+    "write_export",
     "quick_open",
     "search_text",
     "git_info",

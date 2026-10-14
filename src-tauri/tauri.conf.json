@@ -33,8 +33,7 @@
         "object-src": "'none'",
         "base-uri": "'none'",
         "frame-src": "'none'"
-      },
-      "freezePrototype": true
+      }
     }
   },
   "bundle": {

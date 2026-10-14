@@ -1,0 +1,489 @@
+/* Rendered Markdown (preview, diff view and HTML export). */
+
+.markdown-body {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 40px 30vh;
+  color: var(--text);
+  font: 16px/1.72 var(--font-ui);
+  overflow-wrap: break-word;
+}
+
+.markdown-body.width-narrow {
+  max-width: 640px;
+}
+
+.markdown-body.width-wide {
+  max-width: 980px;
+}
+
+.markdown-body.font-serif {
+  font-family: var(--font-serif);
+  font-size: 17.5px;
+}
+
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  position: relative;
+  margin: 1.8em 0 0.6em;
+  color: var(--md-heading);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+}
+
+.markdown-body h1 {
+  font-size: 2.05em;
+  letter-spacing: -0.022em;
+}
+
+.markdown-body h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+  font-size: 1.5em;
+}
+
+.markdown-body h3 {
+  font-size: 1.22em;
+}
+
+.markdown-body h4 {
+  font-size: 1.05em;
+}
+
+.markdown-body h5,
+.markdown-body h6 {
+  color: var(--text-muted);
+  font-size: 0.92em;
+}
+
+.markdown-body .anchor {
+  position: absolute;
+  left: -1.1em;
+  padding-right: 0.3em;
+  color: var(--text-faint);
+  opacity: 0;
+  text-decoration: none;
+}
+
+.markdown-body .anchor::before {
+  content: "#";
+}
+
+.markdown-body :is(h1, h2, h3, h4, h5, h6):hover .anchor {
+  opacity: 1;
+}
+
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body blockquote,
+.markdown-body table,
+.markdown-body pre,
+.markdown-body details,
+.markdown-body .markdown-alert,
+.markdown-body .mermaid-diagram {
+  margin: 0 0 1.1em;
+}
+
+.markdown-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.markdown-body a[data-wikilink] {
+  text-decoration-style: dotted;
+}
+
+.markdown-body strong {
+  font-weight: 700;
+}
+
+.markdown-body mark {
+  padding: 0 2px;
+  border-radius: 3px;
+  background: var(--match);
+  color: inherit;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.6em;
+}
+
+.markdown-body li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-body li > p {
+  margin-bottom: 0.5em;
+}
+
+.markdown-body li > ul,
+.markdown-body li > ol {
+  margin: 0.25em 0 0;
+}
+
+.markdown-body .task-list-item,
+.markdown-body li:has(> input[type="checkbox"]) {
+  list-style: none;
+}
+
+.markdown-body li > input[type="checkbox"] {
+  width: 1em;
+  height: 1em;
+  margin: 0 0.5em 0 -1.4em;
+  vertical-align: -0.1em;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.markdown-body li > input[type="checkbox"]:disabled {
+  cursor: default;
+}
+
+.markdown-body blockquote {
+  padding: 0.1em 1.1em;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-muted);
+}
+
+.markdown-body hr {
+  height: 1px;
+  margin: 2em 0;
+  border: none;
+  background: var(--border);
+}
+
+.markdown-body img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.markdown-body code {
+  padding: 0.12em 0.36em;
+  border-radius: 4px;
+  background: var(--md-code-bg);
+  color: var(--md-code);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+
+.markdown-body pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--md-code-bg);
+  font-size: 0.86em;
+  line-height: 1.55;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  background: none;
+  color: var(--text);
+  font-size: 1em;
+}
+
+.markdown-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  border-collapse: collapse;
+  font-size: 0.94em;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+}
+
+.markdown-body th {
+  background: var(--bg-pane);
+  font-weight: 650;
+  text-align: left;
+}
+
+.markdown-body tr:nth-child(2n) td {
+  background: color-mix(in srgb, var(--bg-pane) 45%, transparent);
+}
+
+.markdown-body .footnotes {
+  margin-top: 2.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.markdown-body sup a,
+.markdown-body .footnote-ref a {
+  text-decoration: none;
+}
+
+.markdown-body details {
+  padding: 0.5em 1em;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.markdown-body summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* GitHub-style callouts */
+.markdown-body .markdown-alert {
+  --alert: var(--accent);
+  padding: 0.6em 1em;
+  border-left: 3px solid var(--alert);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--alert) 8%, transparent);
+}
+
+.markdown-body .markdown-alert > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body .markdown-alert-title {
+  margin-bottom: 0.3em;
+  color: var(--alert);
+  font-size: 0.9em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.markdown-body .markdown-alert-note {
+  --alert: #3f7cc4;
+}
+
+.markdown-body .markdown-alert-tip {
+  --alert: #2e8b57;
+}
+
+.markdown-body .markdown-alert-important {
+  --alert: #8250df;
+}
+
+.markdown-body .markdown-alert-warning {
+  --alert: #b8860b;
+}
+
+.markdown-body .markdown-alert-caution {
+  --alert: #c84238;
+}
+
+.markdown-body .mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  overflow: auto;
+}
+
+.markdown-body .mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-body .mermaid-error,
+.markdown-body .math-error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--del-bg);
+  color: var(--del-text);
+  font: 13px var(--font-mono);
+}
+
+.markdown-body [data-math-style="display"] {
+  display: block;
+  overflow-x: auto;
+  text-align: center;
+}
+
+/* ------------------------------------------------- readable diff (document) */
+
+.diff-doc {
+  padding-top: 24px;
+}
+
+.diff-block {
+  position: relative;
+  margin: 0 -16px 0.2em;
+  padding: 2px 16px;
+  border-left: 3px solid transparent;
+  border-radius: 0 6px 6px 0;
+}
+
+.diff-block > :first-child + * > :last-child,
+.diff-block .diff-html > :last-child {
+  margin-bottom: 0.4em;
+}
+
+.diff-block.kind-unchanged {
+  opacity: 0.78;
+}
+
+.diff-block.kind-added {
+  border-left-color: var(--ins-bar);
+  background: var(--ins-bg);
+}
+
+.diff-block.kind-removed {
+  border-left-color: var(--del-bar);
+  background: var(--del-bg);
+}
+
+.diff-block.kind-removed .diff-html {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--del-bar) 60%, transparent);
+  opacity: 0.85;
+}
+
+.diff-block.kind-modified {
+  border-left-color: var(--mod-bar);
+  background: color-mix(in srgb, var(--mod-bar) 7%, transparent);
+}
+
+.diff-block.kind-moved {
+  border-left-color: var(--move-bar);
+  background: color-mix(in srgb, var(--move-bar) 9%, transparent);
+}
+
+.diff-tag {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  color: var(--text-faint);
+  font: 600 10.5px var(--font-ui);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.diff-edit {
+  position: absolute;
+  top: 2px;
+  right: 80px;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: 11.5px var(--font-ui);
+  opacity: 0;
+}
+
+.hunk-header .diff-edit {
+  position: static;
+  opacity: 1;
+}
+
+.diff-block:hover .diff-edit,
+.diff-edit:focus-visible {
+  opacity: 1;
+}
+
+.diff-prose {
+  white-space: pre-wrap;
+}
+
+.diff-heading {
+  margin: 0.6em 0 0.4em;
+  color: var(--md-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: pre-wrap;
+}
+
+.diff-heading.h1 {
+  font-size: 2em;
+}
+
+.diff-heading.h2 {
+  font-size: 1.5em;
+}
+
+.diff-heading.h3 {
+  font-size: 1.22em;
+}
+
+.diff-marker {
+  color: var(--text-muted);
+}
+
+.diff-code {
+  white-space: pre-wrap;
+}
+
+.diff-doc ins,
+.diff-table ins {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ins-bar) 30%, transparent);
+  color: var(--ins-text);
+  text-decoration: none;
+}
+
+.diff-doc del,
+.diff-table del {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--del-bar) 25%, transparent);
+  color: var(--del-text);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.diff-type-change {
+  margin-bottom: 0.2em;
+  color: var(--text-muted);
+  font-size: 0.82em;
+  font-style: italic;
+}
+
+.diff-moved-away {
+  margin: 0.2em 0;
+  color: var(--text-faint);
+  font-size: 0.88em;
+  font-style: italic;
+}
+
+.diff-gap {
+  display: block;
+  width: 100%;
+  margin: 0.6em 0;
+  padding: 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: 12.5px var(--font-ui);
+}
+
+.diff-gap:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.diff-table tr.row-added td {
+  background: var(--ins-bg);
+}
+
+.diff-table tr.row-removed td {
+  background: var(--del-bg);
+  text-decoration: line-through;
+}

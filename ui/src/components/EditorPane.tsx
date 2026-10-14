@@ -1,6 +1,7 @@
 import { EditorSelection, EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { createEffect, on, onCleanup, onMount } from "solid-js";
+import { minimalChange } from "../editor/format";
 import { createExtensions, readOnlyCompartment, settingEffects } from "../editor/setup";
 import { registerPane, scrolled } from "../editor/sync";
 import {
@@ -96,12 +97,9 @@ export function EditorPane() {
     view.scrollDOM.addEventListener("scroll", onScroll, { passive: true });
 
     const offReplace = onExternalReplace((path, text) => {
+      // Replace only the changed span so scroll position and cursor survive.
       const replace = (state: EditorState) =>
-        state.update({
-          changes: { from: 0, to: state.doc.length, insert: text },
-          selection: EditorSelection.cursor(Math.min(state.selection.main.head, text.length)),
-          userEvent: "input.reload",
-        });
+        state.update({ changes: minimalChange(state.doc.toString(), text), userEvent: "input.reload" });
       if (path === shownPath) view.dispatch(replace(view.state));
       else if (states.has(path)) states.set(path, replace(states.get(path)!).state);
     });

@@ -1,6 +1,6 @@
 import { EditorSelection, EditorState, type TransactionSpec } from "@codemirror/state";
 import { describe, expect, it } from "vitest";
-import { insertLink, insertTable, setHeading, toggleList, toggleTaskAt, toggleWrap } from "./format";
+import { insertLink, insertTable, minimalChange, setHeading, toggleList, toggleTaskAt, toggleWrap } from "./format";
 
 function state(doc: string, from: number, to = from) {
   return EditorState.create({ doc, selection: EditorSelection.single(from, to) });
@@ -73,5 +73,14 @@ describe("headings and lists", () => {
     const s = state("para", 4);
     const out = apply(s, insertTable(s));
     expect(out.doc.toString().startsWith("para\n\n| Column 1")).toBe(true);
+  });
+});
+
+describe("minimalChange", () => {
+  it("replaces only the differing middle", () => {
+    expect(minimalChange("abcXdef", "abcYYdef")).toEqual({ from: 3, to: 4, insert: "YY" });
+    expect(minimalChange("same", "same")).toEqual({ from: 4, to: 4, insert: "" });
+    expect(minimalChange("", "new")).toEqual({ from: 0, to: 0, insert: "new" });
+    expect(minimalChange("aaa", "aa")).toEqual({ from: 2, to: 3, insert: "" });
   });
 });

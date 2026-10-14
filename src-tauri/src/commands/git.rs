@@ -6,7 +6,7 @@ use std::sync::Arc;
 use md_core::RenderContext;
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use vcs::docdiff::{BlockChange, CollapsedEntry, Hunk};
+use vcs::docdiff::{BlockChange, BlockType, CollapsedEntry, Hunk, Segment, SegmentKind};
 use vcs::{CommitInfo, DocDiff, FileStatus, Repo, RepoInfo, Revision};
 
 use crate::error::{CmdError, blocking};
@@ -142,6 +142,10 @@ pub struct DiffView {
     /// Rendered HTML per block for unchanged, added, removed and moved
     /// blocks (`None` for modified blocks, which the UI draws from segments).
     pub blocks_html: Vec<Option<String>>,
+    /// Inline HTML for edited prose blocks: the text rendered as Markdown
+    /// with `<ins>`/`<del>` marks. `None` for other blocks; code and tables
+    /// are drawn from segments by the UI.
+    pub modified_html: Vec<Option<String>>,
     /// Classic line hunks for the source view.
     pub hunks: Vec<Hunk>,
     pub old_exists: bool,
@@ -189,19 +193,121 @@ fn build_view(path: &Path, old_text: Option<String>, new_text: Option<String>) -
             Some(md_core::render(text, &ctx).html)
         })
         .collect();
+    let modified_html = diff
+        .blocks
+        .iter()
+        .map(|b| {
+            let prose = matches!(
+                b.block_type,
+                BlockType::Paragraph
+                    | BlockType::Heading { .. }
+                    | BlockType::ListItem { .. }
+                    | BlockType::Quote
+            );
+            (b.kind == BlockChange::Modified && prose && b.table.is_none())
+                .then(|| render_segments(&b.segments, &ctx))
+        })
+        .collect();
     DiffView {
         collapsed: diff.collapsed(CONTEXT_BLOCKS),
         diff,
         blocks_html,
+        modified_html,
         hunks,
         old_exists,
         new_exists,
     }
 }
 
+// Private-use characters that survive Markdown rendering as plain text.
+const INS_OPEN: char = '\u{E000}';
+const INS_CLOSE: char = '\u{E001}';
+const DEL_OPEN: char = '\u{E002}';
+const DEL_CLOSE: char = '\u{E003}';
+const MARKERS: [char; 4] = [INS_OPEN, INS_CLOSE, DEL_OPEN, DEL_CLOSE];
+
+/// Renders word segments as inline Markdown, keeping insert/delete marks.
+fn render_segments(segments: &[Segment], ctx: &RenderContext) -> String {
+    let mut md = String::new();
+    for seg in segments {
+        let text = seg.text.replace(MARKERS, "");
+        let (open, close) = match seg.kind {
+            SegmentKind::Equal => {
+                md.push_str(&text);
+                continue;
+            }
+            SegmentKind::Insert => (INS_OPEN, INS_CLOSE),
+            SegmentKind::Delete => (DEL_OPEN, DEL_CLOSE),
+        };
+        md.push(open);
+        md.push_str(&text);
+        md.push(close);
+    }
+    let html = md_core::render(&md, ctx).html;
+    // A single paragraph: keep only its contents (the UI supplies the block).
+    let trimmed = html.trim();
+    let inner = trimmed
+        .strip_prefix("<p")
+        .and_then(|rest| rest.split_once('>'))
+        .and_then(|(_, rest)| rest.strip_suffix("</p>"))
+        .filter(|inner| !inner.contains("<p"))
+        .unwrap_or(trimmed);
+    mark_up(inner)
+}
+
+/// Turns the marker characters into tags, but only in text: markers that
+/// ended up inside a tag (an edited link URL, say) are dropped.
+fn mark_up(html: &str) -> String {
+    let mut out = String::with_capacity(html.len() + 32);
+    let mut in_tag = false;
+    for c in html.chars() {
+        match c {
+            '<' => {
+                in_tag = true;
+                out.push(c);
+            }
+            '>' => {
+                in_tag = false;
+                out.push(c);
+            }
+            _ if in_tag && MARKERS.contains(&c) => {}
+            INS_OPEN => out.push_str("<ins>"),
+            INS_CLOSE => out.push_str("</ins>"),
+            DEL_OPEN => out.push_str("<del>"),
+            DEL_CLOSE => out.push_str("</del>"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn modified_prose_keeps_formatting_and_marks() {
+        let view = build_view(
+            Path::new("/d/a.md"),
+            Some("Welcome to the **handbook**. See [docs](a.md).\n".into()),
+            Some("Welcome to the team **handbook**. See [docs](b.md).\n".into()),
+        );
+        let html = view
+            .modified_html
+            .iter()
+            .flatten()
+            .next()
+            .expect("one modified block");
+        assert!(html.contains("<ins>team"), "{html}");
+        assert!(html.contains("<strong"), "{html}");
+        assert!(!html.chars().any(|c| MARKERS.contains(&c)), "{html}");
+    }
+
+    #[test]
+    fn markers_inside_tags_are_dropped() {
+        let input = format!("<a href=\"x{INS_OPEN}y{INS_CLOSE}\">{DEL_OPEN}t{DEL_CLOSE}</a>");
+        assert_eq!(mark_up(&input), "<a href=\"xy\"><del>t</del></a>");
+    }
 
     #[test]
     fn view_renders_unmodified_blocks_only() {

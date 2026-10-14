@@ -35,6 +35,9 @@ pub(crate) fn comrak_options() -> Options<'static> {
     opts.extension.alerts = true;
     opts.extension.math_dollars = true;
     opts.extension.math_code = true;
+    // Same as the preview: [[Page|label]] prints its label, ==text== highlights.
+    opts.extension.wikilinks_title_after_pipe = true;
+    opts.extension.highlight = true;
     opts
 }
 
@@ -496,6 +499,9 @@ impl<'a, 's, 'i> Renderer<'a, 's, 'i> {
             NodeValue::Strong => out.push_str(&format!("#strong[{}];", self.inlines(node))),
             NodeValue::Strikethrough => {
                 out.push_str(&format!("#strike[{}];", self.inlines(node)));
+            }
+            NodeValue::Highlight => {
+                out.push_str(&format!("#highlight[{}];", self.inlines(node)));
             }
             NodeValue::Link(link) => self.link(node, &link.url, out),
             NodeValue::Image(link) => {

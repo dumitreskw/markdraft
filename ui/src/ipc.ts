@@ -324,6 +324,7 @@ export interface DiffView {
   diff: { blocks: DiffBlock[]; stats: DiffStats; timedOut: boolean };
   collapsed: CollapsedEntry[];
   blocksHtml: (string | null)[];
+  modifiedHtml: (string | null)[];
   hunks: Hunk[];
   oldExists: boolean;
   newExists: boolean;

@@ -424,6 +424,23 @@ mod tests {
     }
 
     #[test]
+    fn wiki_links_and_highlights_print_as_text() {
+        let typst = markdown_to_typst(
+            &ExportInput::new(
+                "See [[Advanced]] and [[Guide|the guide]], ==important==.
+",
+            ),
+            &ExportOptions::default(),
+        )
+        .unwrap();
+        assert!(
+            !typst.contains("[[") && typst.contains("Advanced") && typst.contains("the guide"),
+            "{typst}"
+        );
+        assert!(typst.contains("#highlight[important]"), "{typst}");
+    }
+
+    #[test]
     fn options_json_shape() {
         let json = serde_json::to_string(&ExportOptions::default()).unwrap();
         assert_eq!(json, r#"{"theme":"clean","paper":"A4","toc":false}"#);

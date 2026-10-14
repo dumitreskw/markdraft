@@ -139,6 +139,20 @@ export function insertCodeBlock(state: EditorState): TransactionSpec {
   });
 }
 
+/** The smallest single replacement turning `a` into `b`. */
+export function minimalChange(a: string, b: string) {
+  let start = 0;
+  const max = Math.min(a.length, b.length);
+  while (start < max && a.charCodeAt(start) === b.charCodeAt(start)) start++;
+  let endA = a.length;
+  let endB = b.length;
+  while (endA > start && endB > start && a.charCodeAt(endA - 1) === b.charCodeAt(endB - 1)) {
+    endA--;
+    endB--;
+  }
+  return { from: start, to: endA, insert: b.slice(start, endB) };
+}
+
 /** Adapts a state transform into a CodeMirror command. */
 export const command =
   (fn: (state: EditorState) => TransactionSpec | null) =>

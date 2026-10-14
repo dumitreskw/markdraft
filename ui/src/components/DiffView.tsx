@@ -153,8 +153,12 @@ export function DiffPane() {
         {(s) => (
           <div class="diff-summary" aria-live="polite">
             <Show when={!s().identical} fallback={<span>No changes between these versions.</span>}>
-              <span class="pill ins">+{s().wordsAdded} words</span>
-              <span class="pill del">−{s().wordsRemoved} words</span>
+              <Show when={s().wordsAdded}>
+                <span class="pill ins">+{s().wordsAdded} words</span>
+              </Show>
+              <Show when={s().wordsRemoved}>
+                <span class="pill del">−{s().wordsRemoved} words</span>
+              </Show>
               <Show when={s().modifiedBlocks}>
                 <span>{plural(s().modifiedBlocks, "block")} edited</span>
               </Show>
@@ -193,7 +197,12 @@ export function DiffPane() {
             {(result) => (
               <Switch>
                 <Match when={mode() === "document"}>
-                  <article class="markdown-body diff-doc">
+                  <article class="markdown-body diff-doc" classList={{ "whole-file": !result().oldExists || !result().newExists }}>
+                    <Show when={!result().oldExists || !result().newExists}>
+                      <p class="diff-whole-note">
+                        {!result().oldExists ? "This whole document is new in this version." : "This whole document was removed in this version."}
+                      </p>
+                    </Show>
                     <For each={entries()}>
                       {(entry) =>
                         entry.type === "gap" ? (
@@ -208,6 +217,7 @@ export function DiffPane() {
                           <BlockView
                             block={result().diff.blocks[entry.index]}
                             html={result().blocksHtml[entry.index]}
+                            modifiedHtml={result().modifiedHtml[entry.index]}
                             onEdit={editable() ? editAt : undefined}
                           />
                         )
@@ -275,7 +285,7 @@ const KIND_LABEL: Record<string, string> = {
   moved: "Moved here",
 };
 
-function BlockView(props: { block: DiffBlock; html: string | null; onEdit?: (line?: number) => void }) {
+function BlockView(props: { block: DiffBlock; html: string | null; modifiedHtml: string | null; onEdit?: (line?: number) => void }) {
   const b = () => props.block;
   const changed = () => b().kind !== "unchanged" && b().kind !== "movedAway";
   const line = () => b().newLines?.[0];
@@ -301,7 +311,10 @@ function BlockView(props: { block: DiffBlock; html: string | null; onEdit?: (lin
           <TableView table={b().table!} />
         </Match>
         <Match when={b().kind === "modified"}>
-          <ModifiedView block={b()} />
+          <ModifiedView block={b()} html={props.modifiedHtml} />
+        </Match>
+        <Match when={b().blockType.type === "frontMatter"}>
+          <pre class="diff-front-matter">{(b().kind === "removed" ? b().oldText : b().newText) ?? ""}</pre>
         </Match>
         <Match when={props.html !== null}>
           <div class="diff-html" innerHTML={props.html!} />
@@ -321,15 +334,11 @@ function Segments(props: { segments: Segment[] }) {
   );
 }
 
-function listMarker(t: BlockType) {
-  if (t.type !== "listItem") return "";
-  const box = t.checked === null ? "" : t.checked ? "☑ " : "☐ ";
-  return (t.ordered ? `${t.number ?? 1}. ` : "• ") + box;
-}
-
 /** A modified block drawn from word segments, styled like its block type. */
-function ModifiedView(props: { block: DiffBlock }) {
+function ModifiedView(props: { block: DiffBlock; html: string | null }) {
   const t = () => props.block.blockType;
+  /** The edited text: formatted HTML when available, else raw segments. */
+  const Content = () => (props.html !== null ? <span innerHTML={props.html} /> : <Segments segments={props.block.segments} />);
   const old = () => props.block.oldBlockType;
   const typeChange = () => {
     const o = old();
@@ -349,17 +358,39 @@ function ModifiedView(props: { block: DiffBlock }) {
       <Show when={typeChange()}>
         <p class="diff-type-change">{typeChange()}</p>
       </Show>
-      <Switch fallback={<p class="diff-prose"><Segments segments={props.block.segments} /></p>}>
+      <Switch
+        fallback={
+          <p class="diff-prose">
+            <Content />
+          </p>
+        }
+      >
         <Match when={t().type === "heading"}>
           <div class={`diff-heading h${(t() as { level: number }).level}`} role="heading" aria-level={(t() as { level: number }).level}>
-            <Segments segments={props.block.segments} />
+            <Content />
           </div>
         </Match>
-        <Match when={t().type === "listItem"}>
-          <p class="diff-prose diff-list" style={{ "padding-left": `${((t() as { depth: number }).depth - 1) * 1.5}em` }}>
-            <span class="diff-marker">{listMarker(t())}</span>
-            <Segments segments={props.block.segments} />
-          </p>
+        <Match when={t().type === "listItem" && (t() as Extract<BlockType, { type: "listItem" }>)}>
+          {(item) => {
+            const body = (
+              <li classList={{ "task-item": item().checked !== null }}>
+                <Show when={item().checked !== null}>
+                  <input type="checkbox" checked={!!item().checked} disabled aria-label={item().checked ? "Done" : "Not done"} />
+                </Show>
+                <Content />
+              </li>
+            );
+            const indent = { "margin-left": `${(item().depth - 1) * 1.6}em` };
+            return item().ordered ? (
+              <ol class="diff-list" start={item().number ?? 1} style={indent}>
+                {body}
+              </ol>
+            ) : (
+              <ul class="diff-list" style={indent}>
+                {body}
+              </ul>
+            );
+          }}
         </Match>
         <Match when={t().type === "code" || t().type === "html" || t().type === "frontMatter"}>
           <pre class="diff-code">
@@ -371,7 +402,7 @@ function ModifiedView(props: { block: DiffBlock }) {
         <Match when={t().type === "quote"}>
           <blockquote>
             <p class="diff-prose">
-              <Segments segments={props.block.segments} />
+              <Content />
             </p>
           </blockquote>
         </Match>

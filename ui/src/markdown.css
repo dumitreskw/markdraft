@@ -321,7 +321,7 @@
 
 .diff-block {
   position: relative;
-  margin: 0 -16px 0.2em;
+  margin: 0 -16px 0.45em;
   padding: 2px 16px;
   border-left: 3px solid transparent;
   border-radius: 0 6px 6px 0;
@@ -364,9 +364,14 @@
 
 .diff-tag {
   position: absolute;
-  top: 4px;
-  right: 8px;
-  color: var(--text-faint);
+  top: -9px;
+  right: 10px;
+  z-index: 1;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-muted);
+  line-height: 17px;
   font: 600 10.5px var(--font-ui);
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -374,8 +379,9 @@
 
 .diff-edit {
   position: absolute;
-  top: 2px;
-  right: 80px;
+  top: -10px;
+  right: 92px;
+  z-index: 1;
   padding: 1px 8px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -420,8 +426,19 @@
   font-size: 1.22em;
 }
 
-.diff-marker {
-  color: var(--text-muted);
+.diff-block .diff-prose,
+.diff-block .diff-list,
+.diff-block .diff-html > :last-child {
+  margin-bottom: 0.35em;
+}
+
+.diff-list .task-item {
+  list-style: none;
+}
+
+.diff-list .task-item > input {
+  margin: 0 0.5em 0 -1.4em;
+  accent-color: var(--accent);
 }
 
 .diff-code {
@@ -486,4 +503,30 @@
 .diff-table tr.row-removed td {
   background: var(--del-bg);
   text-decoration: line-through;
+}
+
+.diff-whole-note {
+  margin-bottom: 1.5em;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bg-pane);
+  color: var(--text-muted);
+  font: 13px var(--font-ui);
+}
+
+.whole-file .diff-block {
+  border-left-color: transparent;
+  background: transparent;
+  opacity: 1;
+}
+
+.whole-file .diff-tag {
+  display: none;
+}
+
+.diff-front-matter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.8em;
 }

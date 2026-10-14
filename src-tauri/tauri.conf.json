@@ -27,7 +27,7 @@
         "default-src": "'self'",
         "script-src": "'self'",
         "style-src": "'self' 'unsafe-inline'",
-        "img-src": "'self' asset: http://asset.localhost data: blob:",
+        "img-src": "'self' mdasset: http://mdasset.localhost https: data: blob:",
         "font-src": "'self' data:",
         "connect-src": "ipc: http://ipc.localhost",
         "object-src": "'none'",
@@ -49,6 +49,26 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "md",
+          "markdown"
+        ],
+        "name": "Markdown document",
+        "description": "Markdown document",
+        "role": "Editor",
+        "mimeType": "text/markdown"
+      },
+      {
+        "ext": [
+          "markdraft-workspace"
+        ],
+        "name": "MarkDraft workspace",
+        "description": "MarkDraft workspace",
+        "role": "Editor"
+      }
     ]
   }
 }

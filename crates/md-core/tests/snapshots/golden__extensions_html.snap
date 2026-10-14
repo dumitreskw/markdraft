@@ -1,0 +1,26 @@
+---
+source: crates/md-core/tests/golden.rs
+expression: doc.html
+---
+<h1 id="extensions" data-sourcepos="1:1-1:12">Extensions<a href="#extensions" aria-label="Link to heading 'Extensions'" data-heading-content="Extensions" class="anchor" rel="noopener noreferrer"></a></h1>
+<div class="markdown-alert markdown-alert-note" data-sourcepos="3:1-4:18">
+<p class="markdown-alert-title">Note</p>
+<p data-sourcepos="4:3-4:18">Notes stand out.</p>
+</div>
+<div class="markdown-alert markdown-alert-warning" data-sourcepos="6:1-7:10">
+<p class="markdown-alert-title">Warning</p>
+<p data-sourcepos="7:3-7:10">Careful.</p>
+</div>
+<p data-sourcepos="9:1-9:43">Inline math <span data-math-style="inline" data-sourcepos="9:13-9:30">e^{i\pi} + 1 = 0</span> and display:</p>
+<p data-sourcepos="11:1-13:2"><span data-math-style="display" data-sourcepos="11:1-13:2">
+\int_0^1 x^2 \, dx
+</span></p>
+<p data-sourcepos="15:1-15:51"><mark data-sourcepos="15:1-15:15">highlighted</mark> text and a <a data-sourcepos="15:28-15:50" href="Wiki%20Page" data-wikilink="true" rel="noopener noreferrer">wiki link</a>.</p>
+<pre data-sourcepos="17:1-20:3"><code class="language-mermaid">graph TD;
+  A--&gt;B;
+</code></pre>
+<details><summary>More</summary>
+<p data-sourcepos="24:1-24:17">Hidden <em data-sourcepos="24:8-24:16">content</em>.</p>
+</details>
+
+<p>Clickable?</p>

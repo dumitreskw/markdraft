@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-highlight-css"
+description = "Enables the highlight_css command without any pre-configured scope."
+commands.allow = ["highlight_css"]
+
+[[permission]]
+identifier = "deny-highlight-css"
+description = "Denies the highlight_css command without any pre-configured scope."
+commands.deny = ["highlight_css"]

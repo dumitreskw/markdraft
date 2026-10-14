@@ -1,8 +1,40 @@
+/// Every command the UI may call. Declaring them generates one permission
+/// per command (`allow-<name>`), and `capabilities/default.json` grants
+/// them explicitly, so nothing is callable by accident.
+const COMMANDS: &[&str] = &[
+    "app_info",
+    "pick_path",
+    "pick_save_path",
+    "take_open_request",
+    "get_settings",
+    "set_settings",
+    "list_recents",
+    "remove_recent",
+    "get_session",
+    "set_session",
+    "highlight_css",
+    "open_external",
+    "reveal_path",
+    "open_path",
+    "add_root",
+    "remove_root",
+    "rescan_root",
+    "current_roots",
+    "save_workspace",
+    "read_file",
+    "save_file",
+    "render_markdown",
+    "create_entry",
+    "rename_entry",
+    "trash_entry",
+    "duplicate_entry",
+    "quick_open",
+];
+
 fn main() {
-    // Declaring the app's commands generates one permission per command, so
-    // the capability files decide exactly which commands the WebView may call.
-    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
-        tauri_build::AppManifest::new().commands(&["app_info", "pick_path", "take_open_request"]),
-    ))
+    tauri_build::try_build(
+        tauri_build::Attributes::new()
+            .app_manifest(tauri_build::AppManifest::new().commands(COMMANDS)),
+    )
     .expect("failed to run tauri-build");
 }

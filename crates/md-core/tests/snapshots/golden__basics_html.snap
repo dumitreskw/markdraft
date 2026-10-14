@@ -1,0 +1,36 @@
+---
+source: crates/md-core/tests/golden.rs
+expression: doc.html
+---
+<h1 id="heading-one" data-sourcepos="5:1-5:13">Heading one<a href="#heading-one" aria-label="Link to heading 'Heading one'" data-heading-content="Heading one" class="anchor" rel="noopener noreferrer"></a></h1>
+<p data-sourcepos="7:1-10:9">A paragraph with <em data-sourcepos="7:18-7:27">emphasis</em>, <strong data-sourcepos="7:30-7:39">strong</strong>, <code data-sourcepos="7:42-7:54">inline code</code>, and a <a data-sourcepos="7:63-7:99" href="https://example.com" title="Example" rel="noopener noreferrer">link</a>.
+Soft break here
+and a hard break<br data-sourcepos="9:17-9:18">
+after it.</p>
+<h2 id="lists" data-sourcepos="12:1-12:8">Lists<a href="#lists" aria-label="Link to heading 'Lists'" data-heading-content="Lists" class="anchor" rel="noopener noreferrer"></a></h2>
+<ul data-sourcepos="14:1-17:7">
+<li data-sourcepos="14:1-14:5">one</li>
+<li data-sourcepos="15:1-16:18">two
+<ul data-sourcepos="16:3-16:18">
+<li data-sourcepos="16:3-16:18">nested <em data-sourcepos="16:12-16:18">two-a</em></li>
+</ul>
+</li>
+<li data-sourcepos="17:1-18:0">three</li>
+</ul>
+<ol data-sourcepos="19:1-22:14">
+<li data-sourcepos="19:1-19:8">
+<p data-sourcepos="19:4-19:8">first</p>
+</li>
+<li data-sourcepos="20:1-20:9">
+<p data-sourcepos="20:4-20:9">second</p>
+</li>
+<li data-sourcepos="22:1-23:0">
+<p data-sourcepos="22:4-22:14">loose third</p>
+</li>
+</ol>
+<blockquote data-sourcepos="24:1-25:17">
+<p data-sourcepos="24:3-25:17">A block quote
+spanning lines.</p>
+</blockquote>
+<hr data-sourcepos="27:1-27:3">
+<p data-sourcepos="29:1-29:40"><img data-sourcepos="29:1-29:40" src="mdasset://localhost//fixtures/images/diagram one.png" alt="Local image"></p>

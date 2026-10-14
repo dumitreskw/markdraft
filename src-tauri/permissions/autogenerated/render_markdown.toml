@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-render-markdown"
+description = "Enables the render_markdown command without any pre-configured scope."
+commands.allow = ["render_markdown"]
+
+[[permission]]
+identifier = "deny-render-markdown"
+description = "Denies the render_markdown command without any pre-configured scope."
+commands.deny = ["render_markdown"]

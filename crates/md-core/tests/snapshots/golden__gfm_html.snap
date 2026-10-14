@@ -1,0 +1,45 @@
+---
+source: crates/md-core/tests/golden.rs
+expression: doc.html
+---
+<h1 id="github-flavoured" data-sourcepos="1:1-1:18">GitHub flavoured<a href="#github-flavoured" aria-label="Link to heading 'GitHub flavoured'" data-heading-content="GitHub flavoured" class="anchor" rel="noopener noreferrer"></a></h1>
+<table data-sourcepos="3:1-6:25">
+<thead>
+<tr data-sourcepos="3:1-3:25">
+<th data-sourcepos="3:2-3:7" align="left">Left</th>
+<th data-sourcepos="3:9-3:16" align="center">Center</th>
+<th data-sourcepos="3:18-3:24" align="right">Right</th>
+</tr>
+</thead>
+<tbody>
+<tr data-sourcepos="5:1-5:25">
+<td data-sourcepos="5:2-5:7" align="left">a</td>
+<td data-sourcepos="5:9-5:16" align="center">b</td>
+<td data-sourcepos="5:18-5:24" align="right">c</td>
+</tr>
+<tr data-sourcepos="6:1-6:25">
+<td data-sourcepos="6:2-6:7" align="left"><code data-sourcepos="6:3-6:5">x</code></td>
+<td data-sourcepos="6:9-6:16" align="center"><strong data-sourcepos="6:10-6:14">y</strong></td>
+<td data-sourcepos="6:18-6:24" align="right"><del data-sourcepos="6:19-6:23">z</del></td>
+</tr>
+</tbody>
+</table>
+<ul class="contains-task-list" data-sourcepos="8:1-9:13">
+<li class="task-list-item" data-sourcepos="8:1-8:13"><input type="checkbox" class="task-list-item-checkbox" checked="" disabled=""> shipped</li>
+<li class="task-list-item" data-sourcepos="9:1-9:13"><input type="checkbox" class="task-list-item-checkbox" disabled=""> pending</li>
+</ul>
+<p data-sourcepos="11:1-11:52">Autolink: <a data-sourcepos="11:11-11:31" href="https://markdraft.app" rel="noopener noreferrer">https://markdraft.app</a> and <a data-sourcepos="11:37-11:51" href="http://www.example.org" rel="noopener noreferrer">www.example.org</a>.</p>
+<p data-sourcepos="13:1-13:26">Footnote reference<sup data-sourcepos="13:19-13:25" class="footnote-ref"><a href="#fn-note" id="fnref-note" data-footnote-ref="" rel="noopener noreferrer">1</a></sup>.</p>
+<pre data-sourcepos="17:1-21:3"><code class="language-rust"><span class="hl-source hl-rust"><span class="hl-meta hl-function hl-rust"><span class="hl-meta hl-function hl-rust"><span class="hl-storage hl-type hl-function hl-rust">fn</span> </span><span class="hl-entity hl-name hl-function hl-rust">main</span></span><span class="hl-meta hl-function hl-rust"><span class="hl-meta hl-function hl-parameters hl-rust"><span class="hl-punctuation hl-section hl-parameters hl-begin hl-rust">(</span></span><span class="hl-meta hl-function hl-rust"><span class="hl-meta hl-function hl-parameters hl-rust"><span class="hl-punctuation hl-section hl-parameters hl-end hl-rust">)</span></span></span></span><span class="hl-meta hl-function hl-rust"> </span><span class="hl-meta hl-function hl-rust"><span class="hl-meta hl-block hl-rust"><span class="hl-punctuation hl-section hl-block hl-begin hl-rust">{</span>
+    <span class="hl-support hl-macro hl-rust">println!</span><span class="hl-meta hl-group hl-rust"><span class="hl-punctuation hl-section hl-group hl-begin hl-rust">(</span></span><span class="hl-meta hl-group hl-rust"><span class="hl-string hl-quoted hl-double hl-rust"><span class="hl-punctuation hl-definition hl-string hl-begin hl-rust">"</span>hi<span class="hl-punctuation hl-definition hl-string hl-end hl-rust">"</span></span></span><span class="hl-meta hl-group hl-rust"><span class="hl-punctuation hl-section hl-group hl-end hl-rust">)</span></span><span class="hl-punctuation hl-terminator hl-rust">;</span>
+</span><span class="hl-meta hl-block hl-rust"><span class="hl-punctuation hl-section hl-block hl-end hl-rust">}</span></span></span>
+</span></code></pre>
+<pre data-sourcepos="23:1-25:3"><code>plain fence
+</code></pre>
+<section data-sourcepos="15:1-15:27" class="footnotes" data-footnotes="">
+<ol>
+<li data-sourcepos="15:1-15:27" id="fn-note">
+<p data-sourcepos="15:10-15:27">The footnote text. <a href="#fnref-note" class="footnote-backref" data-footnote-backref="" aria-label="Back to reference 1" rel="noopener noreferrer">↩</a></p>
+</li>
+</ol>
+</section>

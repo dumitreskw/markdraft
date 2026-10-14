@@ -4,6 +4,8 @@
 mod commands;
 mod error;
 mod events;
+mod protocol;
+mod roots;
 mod state;
 
 use std::ffi::OsString;
@@ -47,16 +49,11 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
         path: absolutize(&p, &cwd),
     });
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         // Must be registered first so a second launch exits before doing work.
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             if let Some(path) = parse_cli(argv).path {
-                let req = OpenRequest {
-                    path: absolutize(&path, Path::new(&cwd)),
-                };
-                if let Err(e) = app.emit(events::OPEN_PATH, req) {
-                    tracing::error!("failed to forward open request: {e}");
-                }
+                forward_open(app, absolutize(&path, Path::new(&cwd)));
             }
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.unminimize();
@@ -64,14 +61,65 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
+        .register_asynchronous_uri_scheme_protocol(protocol::SCHEME, protocol::handle)
         .manage(AppState::new(initial))
+        .setup(|_| {
+            // Load syntax definitions before the first document is rendered.
+            std::thread::spawn(md_core::warm_up);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
-            commands::app_info,
-            commands::pick_path,
-            commands::take_open_request,
+            commands::app::app_info,
+            commands::app::pick_path,
+            commands::app::pick_save_path,
+            commands::app::take_open_request,
+            commands::app::get_settings,
+            commands::app::set_settings,
+            commands::app::list_recents,
+            commands::app::remove_recent,
+            commands::app::get_session,
+            commands::app::set_session,
+            commands::app::highlight_css,
+            commands::app::open_external,
+            commands::app::reveal_path,
+            commands::roots::open_path,
+            commands::roots::add_root,
+            commands::roots::remove_root,
+            commands::roots::rescan_root,
+            commands::roots::current_roots,
+            commands::roots::save_workspace,
+            commands::docs::read_file,
+            commands::docs::save_file,
+            commands::docs::render_markdown,
+            commands::docs::create_entry,
+            commands::docs::rename_entry,
+            commands::docs::trash_entry,
+            commands::docs::duplicate_entry,
+            commands::search::quick_open,
         ])
-        .run(tauri::generate_context!())?;
+        .build(tauri::generate_context!())?;
+
+    app.run(|_app, _event| {
+        // macOS delivers files opened from Finder as an event, not argv.
+        #[cfg(target_os = "macos")]
+        if let tauri::RunEvent::Opened { urls } = _event {
+            for path in urls.iter().filter_map(|u| u.to_file_path().ok()) {
+                forward_open(_app, path);
+            }
+        }
+    });
     Ok(())
+}
+
+/// Hands a path to the UI: queued if the UI has not started yet, and
+/// emitted for a UI that is already listening.
+fn forward_open(app: &tauri::AppHandle, path: PathBuf) {
+    let req = OpenRequest { path };
+    app.state::<AppState>().queue_open(req.clone());
+    if let Err(e) = app.emit(events::OPEN_PATH, req) {
+        tracing::error!("failed to forward open request: {e}");
+    }
 }
 
 fn absolutize(path: &Path, cwd: &Path) -> PathBuf {

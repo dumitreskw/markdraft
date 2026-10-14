@@ -1,12 +1,40 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissions for the main window. All file IO goes through MarkDraft's own commands.",
-  "windows": ["main"],
+  "description": "Permissions for the main window. All file IO goes through MarkDraft's own commands; there is no file-system plugin.",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
+    "core:window:allow-set-title",
+    "core:window:allow-start-dragging",
     "allow-app-info",
     "allow-pick-path",
-    "allow-take-open-request"
+    "allow-pick-save-path",
+    "allow-take-open-request",
+    "allow-get-settings",
+    "allow-set-settings",
+    "allow-list-recents",
+    "allow-remove-recent",
+    "allow-get-session",
+    "allow-set-session",
+    "allow-highlight-css",
+    "allow-open-external",
+    "allow-reveal-path",
+    "allow-open-path",
+    "allow-add-root",
+    "allow-remove-root",
+    "allow-rescan-root",
+    "allow-current-roots",
+    "allow-save-workspace",
+    "allow-read-file",
+    "allow-save-file",
+    "allow-render-markdown",
+    "allow-create-entry",
+    "allow-rename-entry",
+    "allow-trash-entry",
+    "allow-duplicate-entry",
+    "allow-quick-open"
   ]
 }

@@ -2,13 +2,17 @@
 //!
 //! A workspace file is plain TOML meant to be committed alongside the docs
 //! it describes. Per-user session state (open tabs, pane sizes) is stored
-//! separately in the OS app-data directory and arrives in M3.
+//! separately in the OS app-data directory (see [`AppStore`]).
+
+mod store;
 
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+
+pub use store::{AppStore, MAX_RECENTS, RecentEntry, RecentKind, StoreError, session_key};
 
 /// File extension of workspace files, without the leading dot.
 pub const WORKSPACE_EXTENSION: &str = "markdraft-workspace";
@@ -163,7 +167,7 @@ impl WorkspaceDef {
     }
 }
 
-fn write_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     let dir = path.parent().unwrap_or(Path::new("."));
     let file_name = path
         .file_name()

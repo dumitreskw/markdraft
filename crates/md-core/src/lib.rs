@@ -3,8 +3,14 @@
 //! This crate is UI-free: it turns Markdown text into HTML and metadata
 //! (title, headings) that the app and the exporter consume.
 
+mod highlight;
+mod render;
+
 use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Arena, Options, parse_document};
+
+pub use highlight::{HighlightTheme, highlight_css, warm_up};
+pub use render::{AssetUrlFn, Heading, RenderContext, RenderedDoc, render};
 
 /// Front matter delimiter recognised at the top of a document.
 pub const FRONT_MATTER_DELIMITER: &str = "---";
@@ -19,6 +25,11 @@ pub fn options() -> Options<'static> {
     opts.extension.autolink = true;
     opts.extension.footnotes = true;
     opts.extension.front_matter_delimiter = Some(FRONT_MATTER_DELIMITER.to_owned());
+    opts.extension.alerts = true;
+    opts.extension.math_dollars = true;
+    opts.extension.wikilinks_title_after_pipe = true;
+    opts.extension.highlight = true;
+    opts.extension.header_id_prefix = Some(String::new());
     opts
 }
 
@@ -51,7 +62,7 @@ pub fn extract_title(markdown: &str) -> Option<String> {
 
 /// Reads a `title:` key from raw YAML front matter without a YAML parser:
 /// only a top-level scalar on a single line is supported.
-fn front_matter_title(raw: &str) -> Option<String> {
+pub(crate) fn front_matter_title(raw: &str) -> Option<String> {
     raw.lines()
         .filter_map(|line| line.strip_prefix("title:"))
         .map(|v| v.trim().trim_matches(|c| c == '"' || c == '\'').trim())

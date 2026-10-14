@@ -35,6 +35,15 @@ ignore = "0.4.33"
 globset = "0.4.20"
 nucleo-matcher = "0.3.1"
 directories = "6.0.0"
+syntect = { version = "5.3.0", default-features = false, features = ["default-fancy"] }
+ammonia = "4.2.3"
+percent-encoding = "2.3.2"
+notify = "8.2.0"
+notify-debouncer-full = "0.7.0"
+encoding_rs = "0.8.42"
+dunce = "1.0.5"
+trash = "5.2.9"
+crossbeam-channel = "0.5.17"
 clap = { version = "4.6.7", features = ["derive"] }
 
 # Desktop shell
@@ -42,9 +51,11 @@ tauri = "2.12.3"
 tauri-build = "2.7.2"
 tauri-plugin-single-instance = "2.5.3"
 tauri-plugin-dialog = "2.8.2"
+tauri-plugin-opener = "2.7.1"
 
 # Testing
 tempfile = "3.27.0"
+insta = "1.49.0"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use export::{ExportOptions, Paper, Theme};
+use export::{ExportInput, ExportOptions, Paper, Theme};
 
 #[derive(Debug, Parser, PartialEq)]
 #[command(name = "markdraft", version, about = "Read, write and export Markdown")]
@@ -61,7 +61,11 @@ pub fn run_headless(cli: &Cli) -> anyhow::Result<bool> {
         paper: *paper,
         toc: *toc,
     };
-    let pdf = export::markdown_to_pdf(&markdown, &opts)?;
+    let mut export_input = ExportInput::new(&markdown);
+    // Relative image paths resolve against the document's folder.
+    export_input.base_dir = Some(input.parent().unwrap_or(Path::new(".")));
+    let pdf = export::markdown_to_pdf(&export_input, &opts)
+        .with_context(|| format!("exporting {}", input.display()))?;
     std::fs::write(&output, pdf).with_context(|| format!("writing {}", output.display()))?;
     Ok(true)
 }
@@ -111,6 +115,36 @@ mod tests {
     #[test]
     fn rejects_unknown_theme() {
         assert!(Cli::try_parse_from(["markdraft", "export", "a.md", "--theme", "x"]).is_err());
+    }
+
+    #[test]
+    fn exports_a_fixture_to_pdf() {
+        let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("../export/tests/fixtures");
+        let dir = tempfile::tempdir().unwrap();
+        let output = dir.path().join("out.pdf");
+        let cli = Cli::try_parse_from([
+            "markdraft".as_ref(),
+            "export".as_ref(),
+            fixtures.join("images.md").as_os_str(),
+            "-o".as_ref(),
+            output.as_os_str(),
+            "--theme".as_ref(),
+            "academic".as_ref(),
+            "--toc".as_ref(),
+        ])
+        .unwrap();
+        assert!(run_headless(&cli).unwrap());
+        let pdf = std::fs::read(&output).unwrap();
+        assert!(pdf.starts_with(b"%PDF-"));
+        // The fixture's PNG was found next to the document and embedded.
+        assert!(pdf.len() > 15_000, "{} bytes", pdf.len());
+    }
+
+    #[test]
+    fn missing_input_is_an_error() {
+        let cli = Cli::try_parse_from(["markdraft", "export", "does-not-exist.md"]).unwrap();
+        let err = run_headless(&cli).unwrap_err();
+        assert!(err.to_string().contains("does-not-exist.md"), "{err}");
     }
 
     #[test]

@@ -3,15 +3,24 @@ name = "export"
 description = "PDF and HTML export for MarkDraft"
 version.workspace = true
 edition.workspace = true
-rust-version.workspace = true
+# typst 0.15 requires Rust 1.92, newer than the workspace default.
+rust-version = "1.92"
 license.workspace = true
 
 [dependencies]
+comrak = { workspace = true, features = [] }
 serde.workspace = true
 thiserror.workspace = true
+typst = "=0.15.1"
+typst-layout = "=0.15.1"
+typst-pdf = "=0.15.1"
+mitex = "=0.2.4"
 
 [dev-dependencies]
+insta = "1.49.0"
 serde_json.workspace = true
+tempfile.workspace = true
+typst-render = "=0.15.1"
 
 [lints]
 workspace = true

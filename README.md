@@ -14,9 +14,12 @@ Files stay plain `.md` on disk — no database, no lock-in.
 - Several folders or workspaces open side by side as **workspace tabs** in one
   window; search, quick open and Git follow the current tab. Tabs come back
   after a restart.
-- Optional system integration (Settings → System): type `markdraft` in a
-  terminal to open the current folder, and right-click a folder for
-  **Open with MarkDraft** / **Open MarkDraft here** (Windows, Linux).
+- System integration: type `markdraft` in a terminal to open the current
+  folder, and right-click a folder for **Open with MarkDraft** /
+  **Open MarkDraft here**. The Windows installers set this up (setup.exe asks;
+  the MSI adds it for all users); otherwise switch it on in Settings → System
+  (Windows, Linux; macOS gets the terminal command). The Linux `.deb`/`.rpm`
+  put `markdraft` on the PATH already.
 - File tree with document titles (or file names), natural sorting, filter,
   keyboard navigation and type-ahead; live updates as files change on disk.
 - Respects `.gitignore`, `.ignore` and `.markdraftignore`; 10,000 files show
@@ -69,6 +72,22 @@ Files stay plain `.md` on disk — no database, no lock-in.
 | Toggle sidebar / outline / focus mode | `Ctrl+\` / `Ctrl+Shift+\` / `F11` |
 | Next / previous workspace tab, close it | `Ctrl+Alt+PgDn` / `Ctrl+Alt+PgUp`, `Ctrl+Alt+W` |
 | Settings | `Ctrl+,` |
+
+## Download
+
+Every release ships, for each system:
+
+| | Install | No install | Other |
+|---|---|---|---|
+| Windows x64 · ARM64 · x86 | `setup.exe` (per-user, no admin) | `portable.zip` | `.msi` for IT deployment (x64, x86) |
+| macOS (Apple silicon, Intel) | `.dmg` — universal or per-architecture | | |
+| Linux x64 · ARM64 | `.deb`, `.rpm` | `.AppImage` | |
+| Headless CLI (all of the above) | | `markdraft-cli` archive | PDF export for servers and CI |
+
+The portable Windows build keeps settings in a `data` folder beside
+`markdraft.exe` (delete `portable.txt` to use the user profile).
+Checksums are in `SHA256SUMS.txt`. How releases are built and signed:
+[docs/SIGNING.md](docs/SIGNING.md).
 
 ## Develop
 

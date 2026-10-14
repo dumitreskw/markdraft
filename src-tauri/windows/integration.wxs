@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSI (per-machine) only: puts <install folder>\bin on the system PATH and adds
+  "Open with MarkDraft" / "Open MarkDraft here" to the folder menus for all
+  users. Windows Installer removes both on uninstall. The per-user setup.exe
+  does the same per user (markdraft.exe, install-integration flag).
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <ComponentGroup Id="MarkDraftIntegration">
+      <Component Id="MarkDraftPathEntry" Directory="INSTALLDIR" Guid="4CAC03F1-D88C-4D96-880C-0F2F369D509F">
+        <Environment Id="MarkDraftPath" Name="PATH" Value="[INSTALLDIR]bin" Part="last" Action="set" System="yes" Permanent="no" />
+        <RegistryValue Root="HKLM" Key="Software\MarkDraft" Name="PathEntry" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+      <Component Id="MarkDraftFolderMenu" Directory="INSTALLDIR" Guid="141FE40B-01AE-4A9F-AB40-0B3753FF6AD2">
+        <RegistryValue Root="HKLM" Key="Software\MarkDraft" Name="FolderMenu" Type="integer" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\shell\MarkDraft" Type="string" Value="Open with MarkDraft" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\shell\MarkDraft" Name="Icon" Type="string" Value="&quot;[INSTALLDIR]markdraft.exe&quot;,0" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\shell\MarkDraft\command" Type="string" Value="&quot;[INSTALLDIR]markdraft.exe&quot; &quot;%1&quot;" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Drive\shell\MarkDraft" Type="string" Value="Open with MarkDraft" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Drive\shell\MarkDraft" Name="Icon" Type="string" Value="&quot;[INSTALLDIR]markdraft.exe&quot;,0" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Drive\shell\MarkDraft\command" Type="string" Value="&quot;[INSTALLDIR]markdraft.exe&quot; &quot;%1&quot;" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\Background\shell\MarkDraft" Type="string" Value="Open MarkDraft here" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\Background\shell\MarkDraft" Name="Icon" Type="string" Value="&quot;[INSTALLDIR]markdraft.exe&quot;,0" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\Background\shell\MarkDraft\command" Type="string" Value="&quot;[INSTALLDIR]markdraft.exe&quot; &quot;%V&quot;" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

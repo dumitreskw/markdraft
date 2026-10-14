@@ -67,9 +67,23 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
         .plugin(tauri_plugin_opener::init())
         .register_asynchronous_uri_scheme_protocol(protocol::SCHEME, protocol::handle)
         .manage(AppState::new(initial))
-        .setup(|_| {
+        .setup(|app| {
             // Load syntax definitions before the first document is rendered.
             std::thread::spawn(md_core::warm_up);
+            // The window is created here (not from the config) so a portable
+            // copy can keep the WebView's data next to the executable too.
+            let config = app
+                .config()
+                .app
+                .windows
+                .first()
+                .cloned()
+                .ok_or("no window in tauri.conf.json")?;
+            let mut window = tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?;
+            if let Some(dir) = portable_data_dir() {
+                window = window.data_directory(dir.join("webview"));
+            }
+            window.build()?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -129,6 +143,20 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
         }
     });
     Ok(())
+}
+
+/// Name of the marker file that makes a copy portable (see [`portable_data_dir`]).
+pub const PORTABLE_MARKER: &str = "portable.txt";
+
+/// A portable copy (the Windows `.zip` download) has `portable.txt` next to
+/// the executable; it then keeps settings, sessions and WebView data in a
+/// `data` folder beside it instead of the user profile.
+pub fn portable_data_dir() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let dir = exe.parent()?;
+    dir.join(PORTABLE_MARKER)
+        .is_file()
+        .then(|| dir.join("data"))
 }
 
 /// Hands a path to the UI: queued if the UI has not started yet, and

@@ -442,7 +442,7 @@ function SystemIntegration() {
               <input
                 type="checkbox"
                 checked={feature().enabled}
-                disabled={busy() || !feature().supported}
+                disabled={busy() || !feature().supported || feature().managed}
                 onChange={(e) => void toggle(which, e.currentTarget.checked)}
               />
               <span>{label}</span>

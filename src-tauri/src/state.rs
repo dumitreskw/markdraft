@@ -68,7 +68,9 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(pending_open: Option<OpenRequest>) -> Self {
-        let store = match AppStore::open_default() {
+        let store = match crate::portable_data_dir()
+            .map_or_else(AppStore::open_default, |d| Ok(AppStore::at(d)))
+        {
             Ok(s) => Some(s),
             Err(e) => {
                 tracing::warn!("settings will not persist: {e}");

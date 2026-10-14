@@ -7,8 +7,10 @@
 //!   backgrounds in the file manager.
 //!
 //! Everything is per-user, needs no admin rights and is fully reversible.
-//! Every artifact points at the running executable, so a moved or
-//! reinstalled app shows up as "stale" until the toggle is flipped again.
+//! The Windows setup turns both on after asking (`--install-integration`);
+//! the MSI sets them up machine-wide itself, which shows here as "managed".
+//! Generated launchers and menu entries point at the running executable, so
+//! a moved app shows up as "stale" until the toggle is flipped again.
 
 use std::fs;
 use std::io;
@@ -23,6 +25,8 @@ pub struct Feature {
     pub enabled: bool,
     /// Installed, but for another copy of the app.
     pub stale: bool,
+    /// Set up machine-wide by an installer; changing it needs an administrator.
+    pub managed: bool,
     /// Where it was installed, or what the user still has to do.
     pub detail: String,
 }
@@ -55,7 +59,7 @@ pub fn set_cli(exe: &Path, enable: bool) -> io::Result<Feature> {
     if enable {
         platform::install_cli(exe)?;
     } else {
-        platform::remove_cli()?;
+        platform::remove_cli(exe)?;
     }
     Ok(platform::cli_status(exe))
 }
@@ -69,9 +73,24 @@ pub fn set_context_menu(exe: &Path, enable: bool) -> io::Result<Feature> {
     Ok(platform::menu_status(exe))
 }
 
+/// Sets everything up (run by the Windows setup via `--install-integration`).
+pub fn install_all() {
+    let exe = match app_exe() {
+        Ok(exe) => exe,
+        Err(e) => return tracing::warn!("cannot find the app: {e}"),
+    };
+    if let Err(e) = platform::install_cli(&exe) {
+        tracing::warn!("could not add the markdraft command: {e}");
+    }
+    if let Err(e) = platform::install_menu(&exe) {
+        tracing::warn!("could not add the folder menu entries: {e}");
+    }
+}
+
 /// Removes everything (run by the uninstaller via `--remove-integration`).
 pub fn remove_all() {
-    if let Err(e) = platform::remove_cli() {
+    let exe = app_exe().unwrap_or_default();
+    if let Err(e) = platform::remove_cli(&exe) {
         tracing::warn!("could not remove the markdraft command: {e}");
     }
     if let Err(e) = platform::remove_menu() {
@@ -103,9 +122,9 @@ mod platform {
 
     use winreg::RegKey;
     use winreg::RegValue;
-    use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE, RegType};
+    use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WRITE, RegType};
 
-    /// Folder menu keys: (key under HKCU\Software\Classes, label, argument).
+    /// Folder menu keys: (key under Software\Classes, label, argument).
     const MENU_KEYS: [(&str, &str, &str); 3] = [
         (r"Directory\shell\MarkDraft", "Open with MarkDraft", "%1"),
         (r"Drive\shell\MarkDraft", "Open with MarkDraft", "%1"),
@@ -116,14 +135,28 @@ mod platform {
         ),
     ];
 
-    fn bin_dir() -> io::Result<PathBuf> {
+    /// The machine-wide environment the MSI installer writes to.
+    const MACHINE_ENVIRONMENT: &str =
+        r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
+
+    const MARKER: &str = "Created by MarkDraft";
+
+    /// The launcher the installers ship next to the app (`bin\markdraft.cmd`).
+    /// It finds the app relative to itself, so it never goes stale.
+    fn bundled_bin(exe: &Path) -> Option<PathBuf> {
+        let dir = exe.parent()?.join("bin");
+        dir.join("markdraft.cmd").is_file().then_some(dir)
+    }
+
+    /// Where a portable or development copy writes its own launcher.
+    fn own_bin() -> io::Result<PathBuf> {
         let base = std::env::var_os("LOCALAPPDATA")
             .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "LOCALAPPDATA is not set"))?;
         Ok(PathBuf::from(base).join("MarkDraft").join("bin"))
     }
 
-    fn shim_path() -> io::Result<PathBuf> {
-        Ok(bin_dir()?.join("markdraft.cmd"))
+    fn bin_dir(exe: &Path) -> io::Result<PathBuf> {
+        bundled_bin(exe).map_or_else(own_bin, Ok)
     }
 
     /// `start` returns at once for the GUI; `export` and `--help` wait so
@@ -133,24 +166,15 @@ mod platform {
         let exe = exe.display();
         format!(
             "@echo off\r\n\
-             rem Created by MarkDraft. Turn it off in Settings > System.\r\n\
+             rem {MARKER}. Turn it off in Settings > System.\r\n\
              if \"%~1\"==\"\" (start \"\" \"{exe}\" . & exit /b 0)\r\n\
              for %%a in (export help -h --help -V --version) do if /i \"%~1\"==\"%%a\" (\"{exe}\" %* & exit /b)\r\n\
              start \"\" \"{exe}\" %*\r\n"
         )
     }
 
-    fn environment(write: bool) -> io::Result<RegKey> {
-        let flags = if write {
-            KEY_READ | KEY_WRITE
-        } else {
-            KEY_READ
-        };
-        RegKey::predef(HKEY_CURRENT_USER).open_subkey_with_flags("Environment", flags)
-    }
-
-    /// The user PATH, without expanding `%VARS%`, and its registry type.
-    fn user_path(env: &RegKey) -> (String, RegType) {
+    /// A PATH value from the registry, without expanding `%VARS%`, and its type.
+    fn read_path(env: &RegKey) -> (String, RegType) {
         match env.get_raw_value("Path") {
             Ok(v) if matches!(v.vtype, RegType::REG_SZ | RegType::REG_EXPAND_SZ) => {
                 let wide: Vec<u16> = v
@@ -177,15 +201,17 @@ mod platform {
         norm(entry) == norm(&dir.to_string_lossy())
     }
 
-    fn path_has(dir: &Path) -> bool {
-        environment(false)
-            .map(|env| user_path(&env).0.split(';').any(|e| same_dir(e, dir)))
+    fn path_has(root: winreg::HKEY, key: &str, dir: &Path) -> bool {
+        RegKey::predef(root)
+            .open_subkey_with_flags(key, KEY_READ)
+            .map(|env| read_path(&env).0.split(';').any(|e| same_dir(e, dir)))
             .unwrap_or(false)
     }
 
-    fn set_path(dir: &Path, present: bool) -> io::Result<()> {
-        let env = environment(true)?;
-        let (path, vtype) = user_path(&env);
+    fn set_user_path(dir: &Path, present: bool) -> io::Result<()> {
+        let env = RegKey::predef(HKEY_CURRENT_USER)
+            .open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)?;
+        let (path, vtype) = read_path(&env);
         let mut entries: Vec<&str> = path.split(';').filter(|e| !e.trim().is_empty()).collect();
         let had = entries.iter().any(|e| same_dir(e, dir));
         if had == present {
@@ -215,30 +241,50 @@ mod platform {
     }
 
     pub fn install_cli(exe: &Path) -> io::Result<()> {
-        fs::create_dir_all(bin_dir()?)?;
-        fs::write(shim_path()?, shim(exe))?;
-        set_path(&bin_dir()?, true)
+        let dir = bin_dir(exe)?;
+        if bundled_bin(exe).is_none() {
+            fs::create_dir_all(&dir)?;
+            fs::write(dir.join("markdraft.cmd"), shim(exe))?;
+        }
+        if path_has(HKEY_LOCAL_MACHINE, MACHINE_ENVIRONMENT, &dir) {
+            return Ok(());
+        }
+        set_user_path(&dir, true)
     }
 
-    pub fn remove_cli() -> io::Result<()> {
-        set_path(&bin_dir()?, false)?;
-        remove_file(&shim_path()?)?;
-        // Leave the folder if something else lives there.
-        let _ = fs::remove_dir(bin_dir()?);
+    pub fn remove_cli(exe: &Path) -> io::Result<()> {
+        if let Some(dir) = bundled_bin(exe) {
+            set_user_path(&dir, false)?;
+        }
+        let own = own_bin()?;
+        set_user_path(&own, false)?;
+        // Only delete a launcher we generated, never the installer's.
+        let shim = own.join("markdraft.cmd");
+        if fs::read_to_string(&shim).is_ok_and(|t| t.contains(MARKER)) {
+            remove_file(&shim)?;
+            // Leave the folder if something else lives there.
+            let _ = fs::remove_dir(own);
+        }
         Ok(())
     }
 
     pub fn cli_status(exe: &Path) -> Feature {
-        let (Ok(shim), Ok(dir)) = (shim_path(), bin_dir()) else {
+        let Ok(dir) = bin_dir(exe) else {
             return unsupported("LOCALAPPDATA is not set");
         };
+        let shim = dir.join("markdraft.cmd");
+        let bundled = bundled_bin(exe).is_some();
         let (exists, stale) = file_state(&shim, exe);
-        let enabled = exists && path_has(&dir);
+        let machine = path_has(HKEY_LOCAL_MACHINE, MACHINE_ENVIRONMENT, &dir);
+        let enabled = exists && (machine || path_has(HKEY_CURRENT_USER, "Environment", &dir));
         Feature {
             supported: true,
             enabled,
-            stale: enabled && stale,
-            detail: if enabled {
+            stale: enabled && stale && !bundled,
+            managed: enabled && machine,
+            detail: if enabled && machine {
+                "Added for all users by the MSI installer.".into()
+            } else if enabled {
                 format!("{} (open a new terminal to use it)", shim.display())
             } else {
                 "Adds a markdraft command to your user PATH.".into()
@@ -275,18 +321,33 @@ mod platform {
         Ok(())
     }
 
-    pub fn menu_status(exe: &Path) -> Feature {
-        let command = RegKey::predef(HKEY_CURRENT_USER)
+    fn menu_command(root: winreg::HKEY) -> Option<String> {
+        RegKey::predef(root)
             .open_subkey(format!(r"Software\Classes\{}\command", MENU_KEYS[0].0))
-            .and_then(|k| k.get_value::<String, _>(""));
-        let enabled = command.is_ok();
+            .and_then(|k| k.get_value::<String, _>(""))
+            .ok()
+    }
+
+    pub fn menu_status(exe: &Path) -> Feature {
+        let user = menu_command(HKEY_CURRENT_USER);
+        let machine = if user.is_none() {
+            menu_command(HKEY_LOCAL_MACHINE)
+        } else {
+            None
+        };
+        let managed = machine.is_some();
+        let command = user.or(machine);
+        let where_ = if managed {
+            "Added for all users by the MSI installer."
+        } else {
+            "Right-click a folder, or empty space inside one."
+        };
         Feature {
             supported: true,
-            enabled,
-            stale: command.is_ok_and(|c| !c.contains(&*exe.to_string_lossy())),
-            detail: "Right-click a folder, or empty space inside one. On Windows 11 the entries are under \
-                     \"Show more options\"."
-                .into(),
+            enabled: command.is_some(),
+            stale: command.is_some_and(|c| !c.contains(&*exe.to_string_lossy())),
+            managed,
+            detail: format!("{where_} On Windows 11 the entries are under \"Show more options\"."),
         }
     }
 
@@ -295,6 +356,7 @@ mod platform {
             supported: false,
             enabled: false,
             stale: false,
+            managed: false,
             detail: why.into(),
         }
     }
@@ -376,7 +438,7 @@ mod platform {
         Err(last)
     }
 
-    pub fn remove_cli() -> io::Result<()> {
+    pub fn remove_cli(_exe: &Path) -> io::Result<()> {
         while let Some(path) = installed_cli() {
             fs::remove_file(path)?;
         }
@@ -393,6 +455,8 @@ mod platform {
                 supported: true,
                 enabled: false,
                 stale: false,
+                managed: false,
+                managed: false,
                 detail: "Adds a markdraft command for your terminal.".into(),
             };
         };
@@ -410,6 +474,7 @@ mod platform {
             supported: true,
             enabled: true,
             stale,
+            managed: false,
             detail: format!("{}{hint}", path.display()),
         }
     }
@@ -496,6 +561,8 @@ mod platform {
                 supported: false,
                 enabled: false,
                 stale: false,
+                managed: false,
+                managed: false,
                 detail:
                     "Finder has no per-app folder menu. Drag a folder onto MarkDraft in the Dock, \
                          or run markdraft . in Terminal."
@@ -507,6 +574,8 @@ mod platform {
                 supported: false,
                 enabled: false,
                 stale: false,
+                managed: false,
+                managed: false,
                 detail: "HOME is not set".into(),
             };
         };
@@ -515,6 +584,7 @@ mod platform {
             supported: true,
             enabled,
             stale,
+            managed: false,
             detail: "GNOME Files: right-click → Scripts → Open with MarkDraft. Dolphin and Nemo: \
                      right-click a folder → Open with MarkDraft."
                 .into(),

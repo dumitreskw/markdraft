@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "resources": {
+      "windows/markdraft.cmd": "bin/markdraft.cmd"
+    },
+    "windows": {
+      "wix": {
+        "fragmentPaths": ["windows/integration.wxs"],
+        "componentGroupRefs": ["MarkDraftIntegration"]
+      }
+    }
+  }
+}

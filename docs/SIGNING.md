@@ -227,10 +227,17 @@ signing, set up at that time.
    git tag v0.1.0
    git push origin v0.1.0
    ```
-3. GitHub → **Actions** → watch **Release**. When it finishes, a **draft
-   release** with all installers appears under **Releases**.
+3. GitHub → **Actions** → watch **Release** (about 30 minutes). When it
+   finishes, a **draft release** appears under **Releases** with every
+   package (Windows x64/x86/ARM64 installers, MSIs and portable zips; macOS
+   universal, Apple silicon and Intel DMGs; Linux x64/ARM64 AppImage, deb
+   and rpm; the headless CLI) and `SHA256SUMS.txt`.
+
+   To try the whole pipeline without a release, push a branch named
+   `release-test/<anything>`: the same files are kept as workflow artifacts
+   for 14 days.
 4. Check the signatures:
-   - Windows (PowerShell): `Get-AuthenticodeSignature .\MarkDraft_0.1.0_x64-setup.exe`
+   - Windows (PowerShell): `Get-AuthenticodeSignature .\MarkDraft-0.1.0-windows-x64-setup.exe`
      should say `Valid`.
    - macOS: `codesign --verify --deep --strict -v /Applications/MarkDraft.app` and
      `spctl -a -vv /Applications/MarkDraft.app` should say `accepted, source=Notarized Developer ID`.

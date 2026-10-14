@@ -1,28 +1,49 @@
 name: Release
 
+# A `v*` tag builds every package into a draft release. Pushing a
+# `release-test/...` branch does the same builds as a dry run and keeps the
+# files as workflow artifacts only.
 on:
   push:
     tags: ["v*"]
+    branches: ["release-test/**"]
 
 permissions:
   contents: write
 
+env:
+  PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') }}
+  TAG: ${{ github.ref_name }}
+
 jobs:
+  draft:
+    name: Create draft release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: |
+          gh release view "$TAG" >/dev/null 2>&1 ||
+            gh release create "$TAG" --draft --prerelease --verify-tag               --title "MarkDraft $TAG" --notes-file .github/release-notes.md
+
   build:
     name: Build (${{ matrix.name }})
+    needs: draft
+    if: ${{ !cancelled() && needs.draft.result != 'failure' }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: macOS universal
-            os: macos-latest
-            args: --target universal-apple-darwin
-          - name: Linux
-            os: ubuntu-22.04
-            args: ""
-          - name: Windows
-            os: windows-latest
-            args: ""
+          # Windows ARM64 is cross-compiled; WiX cannot build ARM64 MSIs reliably, so NSIS only.
+          - { name: Windows x64, os: windows-latest, platform: windows, bundles: "nsis,msi", builds: "x86_64-pc-windows-msvc:x64" }
+          - { name: Windows x86, os: windows-latest, platform: windows, bundles: "nsis,msi", builds: "i686-pc-windows-msvc:x86" }
+          - { name: Windows ARM64, os: windows-latest, platform: windows, bundles: "nsis", builds: "aarch64-pc-windows-msvc:arm64" }
+          # One job for all three: the universal build compiles both architectures anyway.
+          - { name: macOS, os: macos-latest, platform: macos, bundles: "dmg", builds: "aarch64-apple-darwin:arm64 x86_64-apple-darwin:x64 universal-apple-darwin:universal" }
+          - { name: Linux x64, os: ubuntu-22.04, platform: linux, bundles: "appimage,deb,rpm", builds: "x86_64-unknown-linux-gnu:x64" }
+          - { name: Linux ARM64, os: ubuntu-22.04-arm, platform: linux, bundles: "appimage,deb,rpm", builds: "aarch64-unknown-linux-gnu:arm64" }
     runs-on: ${{ matrix.os }}
     env:
       # Signing turns on by itself once the secrets exist (see docs/SIGNING.md).
@@ -36,14 +57,25 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
-            libayatana-appindicator3-dev librsvg2-dev patchelf \
-            pkg-config zlib1g-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libssl-dev             libayatana-appindicator3-dev librsvg2-dev patchelf             pkg-config zlib1g-dev libfuse2 xdg-utils
 
+      - name: Rust targets
+        id: targets
+        shell: bash
+        run: |
+          targets=""
+          for spec in ${{ matrix.builds }}; do
+            t=${spec%%:*}
+            if [[ $t == universal-apple-darwin ]]; then continue; fi
+            targets="$targets,$t"
+          done
+          echo "list=${targets#,}" >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ steps.targets.outputs.list }}
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.name }}
 
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
@@ -116,13 +148,55 @@ jobs:
             echo "EXTRA_TAURI_ARGS=--config src-tauri/tauri.signing.json"
           } >> "$GITHUB_ENV"
 
-      # MSI + NSIS on Windows, .app + DMG on macOS, AppImage + deb + rpm on Linux.
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and package
+        shell: bash
+        run: |
+          for spec in ${{ matrix.builds }}; do
+            target=${spec%%:*} arch=${spec##*:}
+            echo "::group::$target"
+            pnpm tauri build --target "$target" --bundles ${{ matrix.bundles }} $EXTRA_TAURI_ARGS
+            if [[ $target != universal-apple-darwin ]]; then
+              cargo build --release --locked -p cli --target "$target"
+            fi
+            bash scripts/package-release.sh "$target" ${{ matrix.platform }} "$arch"
+            echo "::endgroup::"
+          done
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: MarkDraft ${{ github.ref_name }}
-          releaseDraft: true
-          prerelease: true
-          args: ${{ matrix.args }} ${{ env.EXTRA_TAURI_ARGS }}
+          name: packages-${{ matrix.platform }}-${{ strategy.job-index }}
+          path: dist/*
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Attach to the draft release
+        if: env.PUBLISH == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$TAG" dist/* --clobber
+
+  checksums:
+    name: Checksums
+    needs: build
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: packages-*
+          path: packages
+          merge-multiple: true
+      - run: |
+          cd packages
+          sha256sum * | tee ../SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: SHA256SUMS.txt
+      - if: env.PUBLISH == 'true'
+        run: gh release upload "$TAG" SHA256SUMS.txt --clobber

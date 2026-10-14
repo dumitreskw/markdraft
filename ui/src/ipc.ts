@@ -157,6 +157,8 @@ export interface IntegrationFeature {
   enabled: boolean;
   /** Installed for another copy of the app. */
   stale: boolean;
+  /** Set up for all users by the MSI; needs an administrator to change. */
+  managed: boolean;
   detail: string;
 }
 

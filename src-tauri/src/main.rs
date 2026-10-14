@@ -3,13 +3,21 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() -> anyhow::Result<()> {
-    // Run by the uninstaller: undo Settings > System.
-    if std::env::args_os()
+    // Run by the Windows setup and uninstaller: the Settings > System options.
+    match std::env::args_os()
         .nth(1)
-        .is_some_and(|a| a == "--remove-integration")
+        .as_deref()
+        .and_then(|a| a.to_str())
     {
-        markdraft_lib::integration::remove_all();
-        return Ok(());
+        Some("--install-integration") => {
+            markdraft_lib::integration::install_all();
+            return Ok(());
+        }
+        Some("--remove-integration") => {
+            markdraft_lib::integration::remove_all();
+            return Ok(());
+        }
+        _ => {}
     }
     let cli = markdraft_lib::parse_cli(std::env::args_os());
     #[cfg(windows)]

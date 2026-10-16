@@ -1,0 +1,71 @@
+{
+  "version": "0.1.1",
+  "notes": "MarkDraft 0.1.1",
+  "pub_date": "2026-10-16T18:59:19Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRXhraHd6MENnVTBKKzVZcWR3ZERIajZ1OGJ1Zm5TUkh1cjBlazBsME9hVE5kUCs0anZRSEp3RENGejVRbzdZazkvajMzSEpkT0tuZEJGSlFYOGdQWVFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0NzgxCWZpbGU6TWFya0RyYWZ0LmFwcC50YXIuZ3oJdmVyc2lvbjowLjEuMQpFTkNtc3Vpd1Q2L2ppVHY5SzJxdisxY21FQ01Tc1dmOWJ5ZUZNODZJSHptNXN5Z1hYUHhpTUI5TU1UZ0JUeXBlN2Uya3h0YTlKenhRSTlKNno3NlFBdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-macos-arm64.app.tar.gz"
+    },
+    "darwin-aarch64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRXhraHd6MENnVTBKKzVZcWR3ZERIajZ1OGJ1Zm5TUkh1cjBlazBsME9hVE5kUCs0anZRSEp3RENGejVRbzdZazkvajMzSEpkT0tuZEJGSlFYOGdQWVFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0NzgxCWZpbGU6TWFya0RyYWZ0LmFwcC50YXIuZ3oJdmVyc2lvbjowLjEuMQpFTkNtc3Vpd1Q2L2ppVHY5SzJxdisxY21FQ01Tc1dmOWJ5ZUZNODZJSHptNXN5Z1hYUHhpTUI5TU1UZ0JUeXBlN2Uya3h0YTlKenhRSTlKNno3NlFBdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-macos-arm64.app.tar.gz"
+    },
+    "darwin-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRThETzRkMzkydEM4WmIxdHhDeEJNUk03NFpkdVhjR0x0NHVzOVd6V2dzMktRT3lmdVU0V0Z4bmlJeWhuQ3lKa2o5QjV1UXhhSnc3aW9uL21QVFh6cUFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc2MDU1CWZpbGU6TWFya0RyYWZ0LmFwcC50YXIuZ3oJdmVyc2lvbjowLjEuMQp1bGM2THlqbWZBa3RVU3ZrK1NNQnFaY1lFYnRJWDN3Z3o0UWpVcEx6MEFRK2JJcVA2VDRhaFlwc2x4NUZGQjUvRkpVTU40OXEvcHlNa3dOUTQzMWFBdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-macos-x64.app.tar.gz"
+    },
+    "darwin-x86_64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRThETzRkMzkydEM4WmIxdHhDeEJNUk03NFpkdVhjR0x0NHVzOVd6V2dzMktRT3lmdVU0V0Z4bmlJeWhuQ3lKa2o5QjV1UXhhSnc3aW9uL21QVFh6cUFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc2MDU1CWZpbGU6TWFya0RyYWZ0LmFwcC50YXIuZ3oJdmVyc2lvbjowLjEuMQp1bGM2THlqbWZBa3RVU3ZrK1NNQnFaY1lFYnRJWDN3Z3o0UWpVcEx6MEFRK2JJcVA2VDRhaFlwc2x4NUZGQjUvRkpVTU40OXEvcHlNa3dOUTQzMWFBdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-macos-x64.app.tar.gz"
+    },
+    "linux-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRStyUDlZcmZYcTJ3aDJGUkN1VlVsSlJQZGhrY0l3YUZvMjA3Wk9YME5aVGNuYkZRVEhiYjd1elkreTJyekJIRjRZV0RxR0RMUkFjY0I4R1VNUnoyZUFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0Mzk0CWZpbGU6TWFya0RyYWZ0XzAuMS4xX2FhcmNoNjQuQXBwSW1hZ2UJdmVyc2lvbjowLjEuMQpiNlh4TmtmQ3krU1BHcDU2N0U4dUJlZWdydlFRNmo0MDVwcFFVNHcwOFZSOUNQdlI0aDlGRFBJSDRZUUdxN0V4ZmFIVUl3dnM2akJIV2pYeDJ2RVBCUT09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-linux-arm64.AppImage"
+    },
+    "linux-aarch64-appimage": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRStyUDlZcmZYcTJ3aDJGUkN1VlVsSlJQZGhrY0l3YUZvMjA3Wk9YME5aVGNuYkZRVEhiYjd1elkreTJyekJIRjRZV0RxR0RMUkFjY0I4R1VNUnoyZUFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0Mzk0CWZpbGU6TWFya0RyYWZ0XzAuMS4xX2FhcmNoNjQuQXBwSW1hZ2UJdmVyc2lvbjowLjEuMQpiNlh4TmtmQ3krU1BHcDU2N0U4dUJlZWdydlFRNmo0MDVwcFFVNHcwOFZSOUNQdlI0aDlGRFBJSDRZUUdxN0V4ZmFIVUl3dnM2akJIV2pYeDJ2RVBCUT09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-linux-arm64.AppImage"
+    },
+    "linux-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRXg5aFM0N1h5U3NRUVI1aEl3NFgyTjRxdlFLbEZKR1AybVpXRmFqOHk3R3FlMEh5V0ZyTWVxRnIzVklmdllhZVlkZEtmVzhiWUFvdlRzc01LVk9NeFFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0MzE3CWZpbGU6TWFya0RyYWZ0XzAuMS4xX2FtZDY0LkFwcEltYWdlCXZlcnNpb246MC4xLjEKcHUvOUlTZ0pDd2JFaGZ4UXpyZWR1Uk5SL0Nmb3NwK3pWZ2N3VHZPMklwTE9MQyt5RU9GbXNJdFhwQ0htSmd4REJBN3VPUVcxTGdBU2ZvYTZmK2ZrRHc9PQo=",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-linux-x64.AppImage"
+    },
+    "linux-x86_64-appimage": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRXg5aFM0N1h5U3NRUVI1aEl3NFgyTjRxdlFLbEZKR1AybVpXRmFqOHk3R3FlMEh5V0ZyTWVxRnIzVklmdllhZVlkZEtmVzhiWUFvdlRzc01LVk9NeFFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0MzE3CWZpbGU6TWFya0RyYWZ0XzAuMS4xX2FtZDY0LkFwcEltYWdlCXZlcnNpb246MC4xLjEKcHUvOUlTZ0pDd2JFaGZ4UXpyZWR1Uk5SL0Nmb3NwK3pWZ2N3VHZPMklwTE9MQyt5RU9GbXNJdFhwQ0htSmd4REJBN3VPUVcxTGdBU2ZvYTZmK2ZrRHc9PQo=",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-linux-x64.AppImage"
+    },
+    "windows-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRTVPZjFzWit0a0hEaXdnbktFZVlycU1qWU5GbEkwby9FbGplOGF2S2UxN1E0R0xQdFFkemtHYWU4T2dXY0M5dFRGY3FRcE5Qc1duRTJXNVNLVFVBcUFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0OTI0CWZpbGU6TWFya0RyYWZ0XzAuMS4xX2FybTY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMS4xCm9sY0k4TEl2L05uRDdodkI0a3U2NVR4dFlqck5ZeWdBY0d5VXpqUmt5WU83MDkxYktrRUI2TzFPRm03VlliQmdzU3FQb3RRMTkwVS9wNUJXa2ZmSkRnPT0K",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-arm64-setup.exe"
+    },
+    "windows-aarch64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRTVPZjFzWit0a0hEaXdnbktFZVlycU1qWU5GbEkwby9FbGplOGF2S2UxN1E0R0xQdFFkemtHYWU4T2dXY0M5dFRGY3FRcE5Qc1duRTJXNVNLVFVBcUFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0OTI0CWZpbGU6TWFya0RyYWZ0XzAuMS4xX2FybTY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMS4xCm9sY0k4TEl2L05uRDdodkI0a3U2NVR4dFlqck5ZeWdBY0d5VXpqUmt5WU83MDkxYktrRUI2TzFPRm03VlliQmdzU3FQb3RRMTkwVS9wNUJXa2ZmSkRnPT0K",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-arm64-setup.exe"
+    },
+    "windows-i686": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRXhlWndBQWd4N2RzQmRFbG8zU2trcGIzNkUyR0hxeXdQSTVZb0tacXMxT04ydW1hb0krNE5GcSs2WjNDc2ZFazhEeVB4ZEcwYlNMeE1BbUhVUFZySWdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0NTkzCWZpbGU6TWFya0RyYWZ0XzAuMS4xX3g4Ni1zZXR1cC5leGUJdmVyc2lvbjowLjEuMQo1UEVNdVhoZ1BaYjZMeFpNa2JwdnRObWJITmxJM0g4cnFBQjR4TjRSVE5Wd2VHS3I5S2lIWW5FWmpxMmwrVkhyZGFlc3YyY3NITm84YUxTSzdoUXFEdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-x86-setup.exe"
+    },
+    "windows-i686-msi": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRTNPVStBMy9zS2pqNEhQYytlaFlxSUZkZGlGZlo0dEU4dlU1MEdxMU5VaVZ6OGJRWi9CVkk3cHRGZGlER2NrYVJGYVNsTVhGaUxsaE9XcFcyZ2VtSmdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0NTkzCWZpbGU6TWFya0RyYWZ0XzAuMS4xX3g4Nl9lbi1VUy5tc2kJdmVyc2lvbjowLjEuMQpCemI1VTRpcldhR2ZPWjdLdkRPS3hPL1cyaDByYjYvV1AzYXpjSVQ0Y09icmZTTmFINDBNeVBTMXp6M2VrRTZqSEpkVnFvc3FoNDBaZjdlbFNzbkNEdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-x86.msi"
+    },
+    "windows-i686-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRXhlWndBQWd4N2RzQmRFbG8zU2trcGIzNkUyR0hxeXdQSTVZb0tacXMxT04ydW1hb0krNE5GcSs2WjNDc2ZFazhEeVB4ZEcwYlNMeE1BbUhVUFZySWdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc0NTkzCWZpbGU6TWFya0RyYWZ0XzAuMS4xX3g4Ni1zZXR1cC5leGUJdmVyc2lvbjowLjEuMQo1UEVNdVhoZ1BaYjZMeFpNa2JwdnRObWJITmxJM0g4cnFBQjR4TjRSVE5Wd2VHS3I5S2lIWW5FWmpxMmwrVkhyZGFlc3YyY3NITm84YUxTSzdoUXFEdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-x86-setup.exe"
+    },
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRTlBYmNTZlc0dE5nV0JRUkpLMjdzSFlIVE83MHhaK2l2b0kxN1lVU2ZJVkk4VUo5TDJLSjgzSkg0V1lLYzZmUDhJTFhyQ1ZLa0NWYUVSL01sRGozNHcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc1MDMyCWZpbGU6TWFya0RyYWZ0XzAuMS4xX3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjEuMQp5N3dzTTdsT3RQMDA3VW4xaTFEdkxoMjdmNU1vaVV3bFFEb05vQmRBaHVOL0RnWWViMFhzUmNNOUdRN0pqNkpLeDEyeXhQbWducVZuaHRTQ0lZM0xEdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-x64-setup.exe"
+    },
+    "windows-x86_64-msi": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRXo4MXA4T3Ntb3JFbVBHVHoybmRLdk9oOFdxWWs4Q0tPQVVQNE53NkdJMW5SNGRSNnM2RFp1Qm0xZDVxWDdxdXlLVTVNaW1aYUpwUmJ2Y056bk11ZEF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc1MDMyCWZpbGU6TWFya0RyYWZ0XzAuMS4xX3g2NF9lbi1VUy5tc2kJdmVyc2lvbjowLjEuMQorMUZzM1BsZ1czeGNXOE5IRC9BQlRVWW9mbDRzanpLTzQ3VGxFV3F3bEx2dEtoUy9PVU1lVGZndXJmUXNYN1lXbHc5ZTBNK3Ziek10V01RZDViTUdDUT09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-x64.msi"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTYmNqZ3JmQnZpRTlBYmNTZlc0dE5nV0JRUkpLMjdzSFlIVE83MHhaK2l2b0kxN1lVU2ZJVkk4VUo5TDJLSjgzSkg0V1lLYzZmUDhJTFhyQ1ZLa0NWYUVSL01sRGozNHcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMTc1MDMyCWZpbGU6TWFya0RyYWZ0XzAuMS4xX3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjEuMQp5N3dzTTdsT3RQMDA3VW4xaTFEdkxoMjdmNU1vaVV3bFFEb05vQmRBaHVOL0RnWWViMFhzUmNNOUdRN0pqNkpLeDEyeXhQbWducVZuaHRTQ0lZM0xEdz09Cg==",
+      "url": "https://github.com/dumitreskw/markdraft/releases/download/v0.1.1/MarkDraft-0.1.1-windows-x64-setup.exe"
+    }
+  }
+}

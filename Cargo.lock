@@ -789,7 +789,7 @@ checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
 
 [[package]]
 name = "cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1551,7 +1551,7 @@ dependencies = [
 
 [[package]]
 name = "export"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "comrak",
  "insta",
@@ -1759,7 +1759,7 @@ dependencies = [
 
 [[package]]
 name = "fs-index"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "crossbeam-channel",
  "encoding_rs",
@@ -3478,7 +3478,7 @@ checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "markdraft"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -3541,7 +3541,7 @@ dependencies = [
 
 [[package]]
 name = "md-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ammonia",
  "comrak",
@@ -5261,7 +5261,7 @@ checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 
 [[package]]
 name = "search"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "nucleo-matcher",
  "regex",
@@ -7430,7 +7430,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vcs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "comrak",
  "dunce",
@@ -8338,7 +8338,7 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "workspace"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "directories",
  "serde",

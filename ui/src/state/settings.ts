@@ -24,6 +24,7 @@ export interface Settings {
   restoreSession: boolean;
   smartPunctuation: boolean;
   defaultView: ViewMode;
+  checkForUpdates: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -43,6 +44,7 @@ export const DEFAULT_SETTINGS: Settings = {
   restoreSession: true,
   smartPunctuation: false,
   defaultView: "split",
+  checkForUpdates: true,
 };
 
 export const [settings, setSettingsStore] = createStore<Settings>({ ...DEFAULT_SETTINGS });

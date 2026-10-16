@@ -56,7 +56,7 @@ impl Roots {
 
 pub struct AppState {
     /// Path given at launch, held until the UI is ready to receive it.
-    pending_open: Mutex<Option<OpenRequest>>,
+    pending_open: Mutex<Vec<OpenRequest>>,
     ui_ready: AtomicBool,
     pub roots: RwLock<Roots>,
     pub self_writes: SelfWrites,
@@ -78,7 +78,7 @@ impl AppState {
             }
         };
         Self {
-            pending_open: Mutex::new(pending_open),
+            pending_open: Mutex::new(pending_open.into_iter().collect()),
             ui_ready: AtomicBool::new(false),
             roots: RwLock::new(Roots::default()),
             self_writes: SelfWrites::default(),
@@ -87,16 +87,17 @@ impl AppState {
         }
     }
 
-    pub fn take_pending_open(&self) -> Option<OpenRequest> {
+    pub fn take_pending_open(&self) -> Vec<OpenRequest> {
         self.ui_ready.store(true, Ordering::SeqCst);
-        lock(&self.pending_open).take()
+        std::mem::take(&mut *lock(&self.pending_open))
     }
 
-    /// Keeps an open request until the UI has started and drained it; once
+    /// Keeps open requests (several files opened together each send one)
+    /// until the UI has started and drained them; once
     /// the UI is running it receives requests as events instead.
     pub fn queue_open(&self, req: OpenRequest) {
         if !self.ui_ready.load(Ordering::SeqCst) {
-            *lock(&self.pending_open) = Some(req);
+            lock(&self.pending_open).push(req);
         }
     }
 

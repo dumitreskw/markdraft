@@ -11,6 +11,8 @@ pub const OPEN_PATH: &str = "app://open-path";
 pub const TREE_BATCH: &str = "tree://batch";
 /// Live changes from a root's watcher.
 pub const FS_CHANGED: &str = "fs://changed";
+/// Bytes of an update downloaded so far.
+pub const UPDATE_PROGRESS: &str = "update://progress";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct OpenRequest {
@@ -25,6 +27,14 @@ pub struct TreeBatch {
     /// True on the last batch of a scan.
     pub done: bool,
     pub elapsed_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateProgress {
+    pub downloaded: u64,
+    /// Size of the download, when the server says.
+    pub total: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize)]

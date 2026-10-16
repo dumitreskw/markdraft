@@ -15,6 +15,7 @@ import {
 } from "../state/workspace";
 import { openContextMenu, type MenuItem } from "./ContextMenu";
 import { CloseIcon, FileIcon, FolderIcon, LayersIcon, PlusIcon } from "./Icons";
+import { scrollableStrip } from "./Workbench";
 
 /** Tabs for the workspaces open in this window, like browser tabs. */
 export function WorkspaceBar() {
@@ -75,6 +76,9 @@ export function WorkspaceBar() {
     );
   };
 
+  let bar!: HTMLDivElement;
+  const onWheel = scrollableStrip(() => bar, () => [activeTabId(), workspaceTabs().length]);
+
   const onKeyDown = (e: KeyboardEvent) => {
     const list = workspaceTabs();
     const i = list.findIndex((t) => t.id === activeTabId());
@@ -85,7 +89,7 @@ export function WorkspaceBar() {
   };
 
   return (
-    <div class="workspace-bar" role="tablist" aria-label="Open workspaces" onKeyDown={onKeyDown}>
+    <div ref={bar} class="workspace-bar" role="tablist" aria-label="Open workspaces" onKeyDown={onKeyDown} onWheel={onWheel}>
       <For each={workspaceTabs()}>
         {(tab) => {
           const active = () => tab.id === activeTabId();

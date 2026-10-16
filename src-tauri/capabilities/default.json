@@ -8,11 +8,12 @@
   "permissions": [
     "core:default",
     "core:window:allow-set-title",
+    "core:window:allow-destroy",
     "core:window:allow-start-dragging",
     "allow-app-info",
     "allow-pick-path",
     "allow-pick-save-path",
-    "allow-take-open-request",
+    "allow-take-open-requests",
     "allow-get-settings",
     "allow-set-settings",
     "allow-list-recents",
@@ -51,6 +52,8 @@
     "allow-backlinks",
     "allow-remove-roots",
     "allow-get-window-state",
-    "allow-set-window-state"
+    "allow-set-window-state",
+    "allow-check-update",
+    "allow-install-update"
   ]
 }

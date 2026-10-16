@@ -5,7 +5,7 @@ const COMMANDS: &[&str] = &[
     "app_info",
     "pick_path",
     "pick_save_path",
-    "take_open_request",
+    "take_open_requests",
     "get_settings",
     "set_settings",
     "list_recents",
@@ -45,6 +45,8 @@ const COMMANDS: &[&str] = &[
     "integration_status",
     "set_cli_on_path",
     "set_context_menu",
+    "check_update",
+    "install_update",
 ];
 
 fn main() {

@@ -54,7 +54,7 @@ Each command is listed in `src-tauri/build.rs` (`COMMANDS`) and granted in
 | App | `app_info() -> AppInfo` |
 | App | `pick_path(kind: Folder\|File\|Workspace) -> Option<PathBuf>` |
 | App | `pick_save_path(kind: Pdf\|Html\|Workspace, suggested_name: String) -> Option<PathBuf>` (approves the path for one write) |
-| App | `take_open_request() -> Option<OpenRequest>` |
+| App | `take_open_requests() -> Vec<OpenRequest>` |
 | App | `get_settings() -> Value` / `set_settings(settings: Value)` |
 | App | `list_recents() -> Vec<RecentEntry>` / `remove_recent(path) -> Vec<RecentEntry>` |
 | App | `get_session(key) -> Option<Value>` / `set_session(key, session: Value)` |
@@ -79,6 +79,7 @@ Each command is listed in `src-tauri/build.rs` (`COMMANDS`) and granted in
 | Export | `export_folder_pdf(folder, out, options) -> usize` |
 | Export | `write_export(out, contents)` |
 | System | `integration_status() -> { cli, contextMenu }` / `set_cli_on_path(enable) -> Feature` / `set_context_menu(enable) -> Feature` |
+| Update | `check_update() -> Option<UpdateInfo>` / `install_update()` (downloads, verifies, installs, restarts; Windows exits into the installer) |
 
 ### Events (Rust → UI)
 
@@ -87,6 +88,7 @@ Each command is listed in `src-tauri/build.rs` (`COMMANDS`) and granted in
 | `app://open-path` | `OpenRequest { path }` — second launch, file association, macOS open |
 | `tree://batch` | `TreeBatch { root_id, nodes: Vec<TreeNode>, done, elapsed_ms }` |
 | `fs://changed` | `FsChanged { root_id, changes: Vec<Change> }` (added, removed, renamed, modified, rescan) |
+| `update://progress` | `UpdateProgress { downloaded, total }` while an update downloads |
 
 ### Custom protocol
 

@@ -62,6 +62,9 @@ function findOpen(path: string): string | undefined {
   return tabs().find((t) => samePath(t, path));
 }
 
+/** Documents being read from disk, so a second request waits for the first. */
+const loading = new Map<string, Promise<boolean>>();
+
 /** Opens a document in a tab (or focuses its tab) and makes it active. */
 export async function openDoc(path: string, target?: { line?: number; fragment?: string }): Promise<boolean> {
   const existing = findOpen(path);
@@ -70,6 +73,17 @@ export async function openDoc(path: string, target?: { line?: number; fragment?:
     if (target) reveal(existing, target);
     return true;
   }
+  const key = [...loading.keys()].find((p) => samePath(p, path));
+  if (key) {
+    if (!(await loading.get(key))) return false;
+    return openDoc(path, target);
+  }
+  const load = loadDoc(path, target).finally(() => loading.delete(path));
+  loading.set(path, load);
+  return load;
+}
+
+async function loadDoc(path: string, target?: { line?: number; fragment?: string }): Promise<boolean> {
   try {
     const loaded = await ipc.readFile(path);
     setDocs(path, {
@@ -86,7 +100,7 @@ export async function openDoc(path: string, target?: { line?: number; fragment?:
       error: null,
     });
     setTabs((t) => {
-      if (t.includes(path)) return t;
+      if (t.some((p) => samePath(p, path))) return t;
       const at = activePath() ? t.indexOf(activePath()!) + 1 : t.length;
       return [...t.slice(0, at), path, ...t.slice(at)];
     });

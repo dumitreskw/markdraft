@@ -4,9 +4,11 @@ import { baseName, stem } from "../paths";
 import { docs } from "../state/docs";
 import { settings, updateSettings, type Settings } from "../state/settings";
 import { dismissToast, modal, setModal, toast, toasts } from "../state/ui";
+import { checkForUpdate, installUpdate, updateStatus } from "../state/update";
 import { opened, roots, saveWorkspaceAs } from "../state/workspace";
 import { exportHtml, exportPdf } from "../export";
 import { QuickOpen } from "./QuickOpen";
+import { UpdateNotice } from "./UpdateNotice";
 
 /** Renders whichever dialog is open. */
 export function ModalHost() {
@@ -408,10 +410,68 @@ function SettingsDialog() {
           {check("restoreSession", "Reopen workspace tabs and layout", "from the last run")}
         </section>
         <Show when={ipc.inTauri()}>
+          <Updates check={check} />
           <SystemIntegration />
         </Show>
       </div>
     </Dialog>
+  );
+}
+
+/** Settings > Updates: automatic checks and a manual one. */
+function Updates(props: { check: (key: keyof Settings, label: string, hint?: string) => JSX.Element }) {
+  const [info] = createResource(() => ipc.appInfo().catch(() => null));
+  const status = () => {
+    const s = updateStatus();
+    switch (s.state) {
+      case "checking":
+        return "Checking…";
+      case "current":
+        return "MarkDraft is up to date.";
+      case "available":
+        return `Version ${s.info.version} is available.`;
+      case "installing":
+        return `Updating to ${s.info.version}…`;
+      case "error":
+        return s.message;
+      default:
+        return null;
+    }
+  };
+  const available = () => {
+    const s = updateStatus();
+    return s.state === "available" ? s.info : null;
+  };
+  return (
+    <section>
+      <h3>Updates</h3>
+      {props.check("checkForUpdates", "Check for updates automatically", "you choose when to install")}
+      <div class="update-row">
+        <small class="muted">
+          <Show when={info()}>{(i) => <>Version {i().version}. </>}</Show>
+          {status()}
+        </small>
+        <Show
+          when={available()}
+          fallback={
+            <button
+              type="button"
+              class="btn small"
+              disabled={["checking", "installing"].includes(updateStatus().state)}
+              onClick={() => void checkForUpdate(true)}
+            >
+              Check now
+            </button>
+          }
+        >
+          {(u) => (
+            <button type="button" class="btn primary small" onClick={() => void installUpdate()}>
+              {u().canInstall ? "Restart to update" : "Download"}
+            </button>
+          )}
+        </Show>
+      </div>
+    </section>
   );
 }
 
@@ -505,6 +565,7 @@ function AboutDialog() {
 export function Toasts() {
   return (
     <div class="toasts" aria-live="polite">
+      <UpdateNotice />
       <For each={toasts()}>
         {(t) => (
           <div class={`toast toast-${t.kind}`} role={t.kind === "error" ? "alert" : "status"}>

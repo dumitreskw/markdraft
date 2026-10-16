@@ -8,3 +8,4 @@ pub mod git;
 pub mod integration;
 pub mod roots;
 pub mod search;
+pub mod update;

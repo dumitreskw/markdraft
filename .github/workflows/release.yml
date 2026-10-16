@@ -4,6 +4,10 @@ name: Release
 # pre-release) once every build has uploaded; if any build fails it stays a
 # draft. Pushing a `release-test/...` branch does the same builds as a dry run
 # and keeps the files as workflow artifacts only.
+#
+# With the TAURI_SIGNING_PRIVATE_KEY secret set (docs/SIGNING.md), builds
+# also sign updater artifacts, and a published release becomes the in-app
+# update feed: latest.json on the `updates` branch.
 on:
   push:
     tags: ["v*"]
@@ -42,7 +46,7 @@ jobs:
           - { name: Windows x86, os: windows-latest, platform: windows, bundles: "nsis,msi", builds: "i686-pc-windows-msvc:x86" }
           - { name: Windows ARM64, os: windows-latest, platform: windows, bundles: "nsis", builds: "aarch64-pc-windows-msvc:arm64" }
           # One job for all three: the universal build compiles both architectures anyway.
-          - { name: macOS, os: macos-latest, platform: macos, bundles: "dmg", builds: "aarch64-apple-darwin:arm64 x86_64-apple-darwin:x64 universal-apple-darwin:universal" }
+          - { name: macOS, os: macos-latest, platform: macos, bundles: "app,dmg", builds: "aarch64-apple-darwin:arm64 x86_64-apple-darwin:x64 universal-apple-darwin:universal" }
           - { name: Linux x64, os: ubuntu-22.04, platform: linux, bundles: "appimage,deb,rpm", builds: "x86_64-unknown-linux-gnu:x64" }
           - { name: Linux ARM64, os: ubuntu-22.04-arm, platform: linux, bundles: "appimage,deb,rpm", builds: "aarch64-unknown-linux-gnu:arm64" }
     runs-on: ${{ matrix.os }}
@@ -51,6 +55,7 @@ jobs:
       HAS_APPLE_SIGNING: ${{ secrets.APPLE_CERTIFICATE != '' }}
       HAS_WINDOWS_SIGNING: ${{ secrets.AZURE_CLIENT_ID != '' }}
       HAS_WINDOWS_TEST_CERT: ${{ secrets.WINDOWS_TEST_CERTIFICATE != '' }}
+      HAS_UPDATER_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -149,8 +154,19 @@ jobs:
             echo "EXTRA_TAURI_ARGS=--config src-tauri/tauri.signing.json"
           } >> "$GITHUB_ENV"
 
+      # ---- In-app updates: signed updater artifacts -------------------------
+      - name: Configure updater artifacts
+        if: env.HAS_UPDATER_KEY == 'true'
+        shell: bash
+        run: |
+          echo '{"bundle":{"createUpdaterArtifacts":true}}' > src-tauri/tauri.updater.json
+          echo "EXTRA_TAURI_ARGS=${EXTRA_TAURI_ARGS:-} --config src-tauri/tauri.updater.json" >> "$GITHUB_ENV"
+
       - name: Build and package
         shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           for spec in ${{ matrix.builds }}; do
             target=${spec%%:*} arch=${spec##*:}
@@ -170,6 +186,13 @@ jobs:
           path: dist/*
           retention-days: 14
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: updater-${{ matrix.platform }}-${{ strategy.job-index }}
+          path: updater/*.sig
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Attach to the draft release
         if: env.PUBLISH == 'true'
@@ -204,3 +227,36 @@ jobs:
       - name: Publish the release
         if: env.PUBLISH == 'true' && needs.build.result == 'success'
         run: gh release edit "$TAG" --draft=false
+
+  feed:
+    name: Update feed
+    needs: [build, checksums]
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') && needs.build.result == 'success' && needs.checksums.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: updater-*
+          path: sigs
+          merge-multiple: true
+      # Installed copies read https://raw.githubusercontent.com/<repo>/updates/latest.json
+      # (tauri.conf.json > plugins.updater). The branch holds just that file.
+      - name: Publish latest.json to the updates branch
+        run: |
+          if ! compgen -G "sigs/*.sig" >/dev/null; then
+            echo "::notice::No updater signatures (TAURI_SIGNING_PRIVATE_KEY is not set); the update feed is unchanged."
+            exit 0
+          fi
+          mkdir feed
+          node scripts/update-feed.mjs "$TAG" sigs > feed/latest.json
+          cat feed/latest.json
+          echo "The update feed MarkDraft checks for new versions, written by the release workflow. Do not edit by hand." > feed/README.md
+          cd feed
+          git init -q -b updates
+          git add latest.json README.md
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "Update feed: MarkDraft $TAG"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" updates

@@ -65,8 +65,10 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .register_asynchronous_uri_scheme_protocol(protocol::SCHEME, protocol::handle)
         .manage(AppState::new(initial))
+        .manage(commands::update::PendingUpdate::default())
         .setup(|app| {
             // Load syntax definitions before the first document is rendered.
             std::thread::spawn(md_core::warm_up);
@@ -90,7 +92,7 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::app::app_info,
             commands::app::pick_path,
             commands::app::pick_save_path,
-            commands::app::take_open_request,
+            commands::app::take_open_requests,
             commands::app::get_settings,
             commands::app::set_settings,
             commands::app::list_recents,
@@ -130,6 +132,8 @@ pub fn run(path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::integration::integration_status,
             commands::integration::set_cli_on_path,
             commands::integration::set_context_menu,
+            commands::update::check_update,
+            commands::update::install_update,
         ])
         .build(tauri::generate_context!())?;
 

@@ -15,6 +15,7 @@ import { ChangeBanner, DocToolbar, Outline, StatusBar, Tabs } from "./components
 import * as ipc from "./ipc";
 import { OUTLINE_BOUNDS, TREE_BOUNDS } from "./layout";
 import { diffRequest } from "./state/diff";
+import { startUpdateChecks } from "./state/update";
 import { activeDoc, activePath, hasUnsaved, saveAll, tabs } from "./state/docs";
 import { effectiveTheme, loadSettings, settings } from "./state/settings";
 import {
@@ -96,6 +97,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     const cleanupEvents = initWorkspaceEvents();
+    const stopUpdateChecks = startUpdateChecks();
 
     const onBlur = () => {
       if (settings.autosave) void saveAll();
@@ -107,12 +109,18 @@ export function App() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("blur", onBlur);
       cleanupEvents();
+      stopUpdateChecks();
     });
+
+    // Paths the OS hands over (more files opened, `markdraft <folder>`) wait
+    // until the last session is back, so restoring can't duplicate them.
+    let started!: () => void;
+    const startup = new Promise<void>((resolve) => (started = resolve));
 
     if (ipc.inTauri()) {
       // Listeners are registered before any await so their cleanups have an owner.
       const unlisteners = [
-        ipc.onOpenPath((req) => void openPathAction(req.path)),
+        ipc.onOpenPath((req) => void startup.then(() => openPathAction(req.path))),
         // Dropping folders or files onto the window opens them (Shift adds a folder).
         getCurrentWebview().onDragDropEvent((event) => {
           if (event.payload.type !== "drop" || !event.payload.paths.length) return;
@@ -135,9 +143,10 @@ export function App() {
           } else if (opened() && dropAdds) void addRootAction(first);
           else void openPathAction(first);
         }),
-        // Ask before closing with unsaved work.
+        // Ask before closing with unsaved work. Returning without
+        // preventDefault() lets the API destroy the window.
         getCurrentWindow().onCloseRequested(async (event) => {
-          await persistSession();
+          await persistSession().catch(() => {});
           if (!hasUnsaved()) return;
           if (settings.autosave && (await saveAll())) return;
           event.preventDefault();
@@ -152,11 +161,16 @@ export function App() {
       setReady(true);
       if (!ipc.inTauri()) return;
       ipc.highlightCss().then(setHighlight, () => {});
-      const pending = await ipc.takeOpenRequest();
-      // A reload keeps what Rust has open; a fresh start reopens the last tabs.
-      if (await reattach()) {
-        if (pending) await openPathAction(pending.path);
-      } else await restoreWindow(pending?.path ?? null);
+      try {
+        const [first, ...more] = await ipc.takeOpenRequests();
+        // A reload keeps what Rust has open; a fresh start reopens the last tabs.
+        if (await reattach()) {
+          if (first) await openPathAction(first.path);
+        } else await restoreWindow(first?.path ?? null);
+        for (const req of more) await openPathAction(req.path);
+      } finally {
+        started();
+      }
     })();
   });
 

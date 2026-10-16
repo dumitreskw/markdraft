@@ -14,6 +14,8 @@
 
 **Portable (Windows):** unzip anywhere and run `markdraft.exe`. Settings stay in the `data` folder next to it; delete `portable.txt` to use your user profile instead.
 
+**Updates:** installed copies (setup.exe, MSI, macOS, AppImage) offer new versions in the app and update themselves when you click *Restart to update* (Settings → Updates). Portable, deb and rpm copies show a download link instead.
+
 **Verify a download:** compare with `SHA256SUMS.txt`, for example `certutil -hashfile file SHA256` (Windows) or `shasum -a 256 file` (macOS/Linux).
 
 > Until MarkDraft has paid code-signing certificates, Windows SmartScreen may say "Windows protected your PC" (choose **More info → Run anyway**) and macOS may say the developer cannot be verified (right-click the app → **Open**). See `docs/SIGNING.md`.

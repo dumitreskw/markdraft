@@ -139,7 +139,7 @@ export const appInfo = () => invoke<AppInfo>("app_info");
 export const pickPath = (kind: PickKind) => invoke<string | null>("pick_path", { kind });
 export const pickSavePath = (kind: SaveKind, suggestedName: string) =>
   invoke<string | null>("pick_save_path", { kind, suggestedName });
-export const takeOpenRequest = () => invoke<OpenRequest | null>("take_open_request");
+export const takeOpenRequests = () => invoke<OpenRequest[]>("take_open_requests");
 
 export const getSettings = () => invoke<Record<string, unknown>>("get_settings");
 export const setSettings = (settings: Record<string, unknown>) => invoke<void>("set_settings", { settings });
@@ -168,6 +168,25 @@ export interface IntegrationStatus {
 }
 
 export const integrationStatus = () => invoke<IntegrationStatus>("integration_status");
+
+export interface UpdateInfo {
+  version: string;
+  currentVersion: string;
+  date: string | null;
+  notes: string | null;
+  /** False for copies that can't replace themselves (portable, .deb/.rpm, dev builds). */
+  canInstall: boolean;
+  pageUrl: string;
+}
+
+export interface UpdateProgress {
+  downloaded: number;
+  total: number | null;
+}
+
+export const checkUpdate = () => invoke<UpdateInfo | null>("check_update");
+/** Downloads, installs and restarts; on Windows the app exits during this call. */
+export const installUpdate = () => invoke<void>("install_update");
 export const setCliOnPath = (enable: boolean) => invoke<IntegrationFeature>("set_cli_on_path", { enable });
 export const setContextMenu = (enable: boolean) => invoke<IntegrationFeature>("set_context_menu", { enable });
 
@@ -391,6 +410,8 @@ export const onTreeBatch = (handler: (batch: TreeBatch) => void): Promise<Unlist
   listen<TreeBatch>("tree://batch", (e) => handler(e.payload));
 export const onFsChanged = (handler: (changed: FsChanged) => void): Promise<UnlistenFn> =>
   listen<FsChanged>("fs://changed", (e) => handler(e.payload));
+export const onUpdateProgress = (handler: (progress: UpdateProgress) => void): Promise<UnlistenFn> =>
+  listen<UpdateProgress>("update://progress", (e) => handler(e.payload));
 
 export function errorMessage(e: unknown): string {
   if (typeof e === "object" && e !== null && "message" in e) {

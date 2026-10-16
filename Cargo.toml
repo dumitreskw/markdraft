@@ -57,6 +57,7 @@ tauri-build = "2.7.2"
 tauri-plugin-single-instance = "2.5.3"
 tauri-plugin-dialog = "2.8.2"
 tauri-plugin-opener = "2.7.1"
+tauri-plugin-updater = { version = "2.14.0", default-features = false, features = ["rustls-tls", "system-proxy"] }
 
 # Testing
 tempfile = "3.27.0"

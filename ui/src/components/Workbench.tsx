@@ -14,8 +14,27 @@ import { CloseIcon, DiffIcon, DownloadIcon, EyeIcon, GitIcon, HistoryIcon, Outli
 import { openContextMenu } from "./ContextMenu";
 import { displayKeys } from "../commands";
 
+/**
+ * Tab strips hide their scrollbar: the mouse wheel scrolls them sideways and
+ * the active tab is kept in view.
+ */
+export function scrollableStrip(strip: () => HTMLElement | undefined, active: () => unknown) {
+  createEffect(
+    on(active, () =>
+      requestAnimationFrame(() => strip()?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" })),
+    ),
+  );
+  return (e: WheelEvent) => {
+    const el = e.currentTarget as HTMLElement;
+    if (el.scrollWidth <= el.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    el.scrollLeft += e.deltaY;
+    e.preventDefault();
+  };
+}
+
 export function Tabs() {
   let strip!: HTMLDivElement;
+  const onWheel = scrollableStrip(() => strip, () => [activePath(), tabs().length]);
   const label = (path: string) => docs[path]?.name ?? path;
   const onKeyDown = (e: KeyboardEvent) => {
     const list = tabs();
@@ -30,7 +49,7 @@ export function Tabs() {
     }
   };
   return (
-    <div ref={strip} class="tabs" role="tablist" aria-label="Open documents" onKeyDown={onKeyDown}>
+    <div ref={strip} class="tabs" role="tablist" aria-label="Open documents" onKeyDown={onKeyDown} onWheel={onWheel}>
       <For each={tabs()}>
         {(path) => {
           const doc = () => docs[path];

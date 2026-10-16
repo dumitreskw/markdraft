@@ -105,12 +105,11 @@ pub async fn pick_save_path(
     Ok(Some(path))
 }
 
-/// Returns the path given at launch, once. The UI calls this on start-up so
-/// the request is not lost before its event listener is attached.
+/// Returns the paths given at launch (and by launches since), once. The UI
+/// calls this on start-up so requests are not lost before its event
+/// listener is attached.
 #[tauri::command]
-pub async fn take_open_request(
-    state: State<'_, AppState>,
-) -> Result<Option<OpenRequest>, CmdError> {
+pub async fn take_open_requests(state: State<'_, AppState>) -> Result<Vec<OpenRequest>, CmdError> {
     Ok(state.take_pending_open())
 }
 

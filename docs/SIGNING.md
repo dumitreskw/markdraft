@@ -246,8 +246,31 @@ signing, set up at that time.
 5. Edit the release notes if you like. When a signed version is ready for
    everyone, untick **Set as a pre-release** so it becomes the latest release.
 
+## 5. In-app updates (free, needed for every release)
+
+Installed copies of MarkDraft check `latest.json` on the `updates` branch and
+only install files signed with MarkDraft's **updater key**. That key is not a
+code-signing certificate: it is a free key pair made by the Tauri CLI.
+
+1. Make the key pair once (already done if `~/.tauri/markdraft-updater.key` exists):
+   `pnpm tauri signer generate -w ~/.tauri/markdraft-updater.key`
+   The public half is `plugins.updater.pubkey` in `src-tauri/tauri.conf.json`.
+2. Add two repository secrets (**Settings → Secrets and variables → Actions**):
+   - `TAURI_SIGNING_PRIVATE_KEY`: the contents of `markdraft-updater.key`
+   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: its password
+3. Tag a release as usual. Each build then signs its setup.exe, MSI, macOS
+   `.app.tar.gz` and AppImage, and once the release is published the
+   **Update feed** job writes `latest.json` to the `updates` branch.
+
+Without the secrets, releases build as before and the feed is left alone.
+Copies older than the first release with an updater (0.1.0) must be updated
+by hand once.
+
 ## What to keep safe
 
+- **The updater key and its password.** If they are lost, installed copies can
+  never update themselves again (they only trust this key); if leaked, rotate
+  it and ship the new public key in a release signed with the old one.
 - The `.p12` file and its password, the Apple app-specific password.
 - The Azure client secret (rotate before it expires; update the GitHub secret).
 - Never commit any of these; they live only in GitHub secrets and your password manager.

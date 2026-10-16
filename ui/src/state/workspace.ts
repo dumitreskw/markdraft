@@ -229,11 +229,25 @@ function tabShowing(path: string): { tab: WorkspaceTab; file: string | null } | 
   return null;
 }
 
+// Opening runs one request at a time: several files opened together (or the
+// same file twice) would otherwise all pass the "already open?" check before
+// any of them added its tab, and show up as duplicate tabs.
+let openQueue: Promise<unknown> = Promise.resolve();
+function queued<A extends unknown[], R>(fn: (...args: A) => Promise<R>): (...args: A) => Promise<R> {
+  return (...args) => {
+    const run = openQueue.then(() => fn(...args));
+    openQueue = run.catch(() => {});
+    return run;
+  };
+}
+
 /**
  * Opens a folder, Markdown file or workspace file in a new workspace tab,
  * or switches to the tab that already shows it.
  */
-export async function openPathAction(path: string): Promise<boolean> {
+export const openPathAction = queued(openPath);
+
+async function openPath(path: string): Promise<boolean> {
   const existing = tabShowing(path);
   if (existing) {
     await switchWorkspace(existing.tab.id);
@@ -324,10 +338,12 @@ export async function closeOtherWorkspaces(keep: number) {
 }
 
 /** Adds a folder to the current workspace tab. */
-export async function addRootAction(path: string) {
+export const addRootAction = queued(addRoot);
+
+async function addRoot(path: string) {
   const tab = currentTab();
   if (!tab) {
-    await openPathAction(path);
+    await openPath(path);
     return;
   }
   try {
@@ -492,13 +508,13 @@ export async function restoreWindow(extra: string | null) {
   const opened: number[] = [];
   for (const t of saved?.tabs ?? []) {
     if (tabShowing(t.path) || !(await openQuiet(t.path))) continue;
-    for (const folder of t.extra) await addRootAction(folder);
+    for (const folder of t.extra) await addRoot(folder);
     opened.push(activeTabId()!);
   }
   const active = saved ? opened[Math.min(saved.active, opened.length - 1)] : undefined;
   if (active !== undefined) await switchWorkspace(active);
   windowReady = true;
-  if (extra) await openPathAction(extra);
+  if (extra) await openPath(extra);
   scheduleWindowSave();
 }
 
